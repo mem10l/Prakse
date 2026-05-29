@@ -2,18 +2,17 @@
 
 declare(strict_types=1);
 
+// Buffer all output so stray warnings/notices never corrupt JSON responses
+ob_start();
+
+// Suppress notices/warnings from leaking into API responses — errors go to
+// the log, not stdout
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/schema.php';
-
-// Load .env if it exists
-$env_file = __DIR__ . '/../.env';
-if (file_exists($env_file)) {
-    foreach (file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
-        [$key, $val] = explode('=', $line, 2);
-        putenv(trim($key) . '=' . trim($val));
-    }
-}
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = rtrim($path, '/') ?: '/';
@@ -40,9 +39,12 @@ function redirect(string $to): void
 
 function json_response(mixed $data, int $status = 200): void
 {
+    // Discard any buffered output (warnings, notices) so they don't corrupt JSON
+    if (ob_get_level()) ob_clean();
     http_response_code($status);
     header('Content-Type: application/json');
-    echo json_encode($data);
+    header('X-Content-Type-Options: nosniff');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -57,21 +59,21 @@ function not_found(): void
 
 function handle_table_data(string $table): void
 {
-    global $TABLES;
-    $table = strtolower($table);
-    if (!array_key_exists($table, TABLES)) {
-        json_response(['error' => "Unknown table \"$table\""], 400);
-    }
-
-    $page  = max(1, (int)($_GET['page'] ?? 1));
-    $limit = min(500, max(1, (int)($_GET['limit'] ?? 100)));
-    $offset = ($page - 1) * $limit;
-
     try {
+        $table = strtolower($table);
+        if (!array_key_exists($table, TABLES)) {
+            json_response(['error' => "Unknown table \"$table\""], 400);
+        }
+
+        $page   = max(1, (int)($_GET['page']  ?? 1));
+        $limit  = min(500, max(1, (int)($_GET['limit'] ?? 100)));
+        $offset = ($page - 1) * $limit;
+
         $db    = get_db();
         $total = (int)$db->query("SELECT COUNT(*) FROM \"$table\"")->fetchColumn();
         $rows  = $db->query("SELECT * FROM \"$table\" LIMIT $limit OFFSET $offset")->fetchAll();
         json_response(['total' => $total, 'rows' => $rows]);
+
     } catch (Throwable $e) {
         json_response(['error' => $e->getMessage()], 500);
     }
@@ -81,32 +83,42 @@ function handle_table_data(string $table): void
 
 function handle_insert(string $table): void
 {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        json_response(['error' => 'Method not allowed'], 405);
-    }
-
-    $table = strtolower($table);
-    if (!array_key_exists($table, TABLES)) {
-        json_response(['error' => "Unknown table \"$table\". Valid: " . implode(', ', array_keys(TABLES))], 400);
-    }
-
-    $body = json_decode(file_get_contents('php://input'), true);
-    if (!$body || empty($body['data'])) {
-        json_response(['error' => 'Body must be JSON: { "format": "json"|"csv", "data": "..." }'], 400);
-    }
-
-    $format = $body['format'] ?? 'json';
-    $data   = $body['data'];
-
     try {
-        $rows = $format === 'csv' ? parse_csv($data) : parse_json_rows($data);
-    } catch (Throwable $e) {
-        json_response(['error' => 'Parse error: ' . $e->getMessage()], 400);
-    }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            json_response(['error' => 'Method not allowed'], 405);
+        }
 
-    $result = insert_rows($table, $rows);
-    $status = ($result['errors'] && !$result['inserted']) ? 400 : 200;
-    json_response($result, $status);
+        $table = strtolower($table);
+        if (!array_key_exists($table, TABLES)) {
+            json_response(['error' => "Unknown table \"$table\". Valid: " . implode(', ', array_keys(TABLES))], 400);
+        }
+
+        $raw_body = file_get_contents('php://input');
+        $body     = json_decode($raw_body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            json_response(['error' => 'Invalid JSON body: ' . json_last_error_msg()], 400);
+        }
+        if (!$body || empty($body['data'])) {
+            json_response(['error' => 'Body must be JSON: { "format": "json"|"csv", "data": "..." }'], 400);
+        }
+
+        $format = $body['format'] ?? 'json';
+        $data   = $body['data'];
+
+        try {
+            $rows = $format === 'csv' ? parse_csv($data) : parse_json_rows($data);
+        } catch (Throwable $e) {
+            json_response(['error' => 'Parse error: ' . $e->getMessage()], 400);
+        }
+
+        $result = insert_rows($table, $rows);
+        $status = ($result['errors'] && !$result['inserted']) ? 400 : 200;
+        json_response($result, $status);
+
+    } catch (Throwable $e) {
+        json_response(['error' => 'Server error: ' . $e->getMessage()], 500);
+    }
 }
 
 function parse_csv(string $text): array

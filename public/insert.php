@@ -1,4 +1,10 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+if (!defined('TABLES_LOADED')) {
+    require_once __DIR__ . '/../src/schema.php';
+    define('TABLES_LOADED', true);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

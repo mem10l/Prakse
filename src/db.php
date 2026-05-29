@@ -7,21 +7,45 @@ function get_db(): PDO
     static $pdo = null;
     if ($pdo !== null) return $pdo;
 
-    $url = getenv('DATABASE_URL');
-    if (!$url) {
-        throw new RuntimeException('DATABASE_URL is not set');
+    // Load .env if not already loaded
+    static $env_loaded = false;
+    if (!$env_loaded) {
+        $env_file = __DIR__ . '/../.env';
+        if (file_exists($env_file)) {
+            foreach (file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+                if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+                [$key, $val] = explode('=', $line, 2);
+                putenv(trim($key) . '=' . trim($val));
+            }
+        }
+        $env_loaded = true;
     }
 
-    // Parse postgres://user:pass@host:port/dbname
+    $url = getenv('DATABASE_URL');
+    if (!$url) {
+        $url = 'postgresql://neondb_owner:npg_CZVv6XFu8QjM@ep-green-violet-aqyhtco2-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require';
+    }
+
     $p = parse_url($url);
-    $dsn = sprintf(
-        'pgsql:host=%s;port=%s;dbname=%s',
+
+    // Parse any extra options from the query string (e.g. sslmode=require)
+    $options = [];
+    if (!empty($p['query'])) {
+        parse_str($p['query'], $options);
+    }
+
+    $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s',
         $p['host'],
         $p['port'] ?? 5432,
-        ltrim($p['path'] ?? '/northwind', '/')
+        ltrim($p['path'] ?? '/neondb', '/')
     );
 
-    $pdo = new PDO($dsn, $p['user'] ?? '', $p['pass'] ?? '', [
+    // Append sslmode if present
+    if (!empty($options['sslmode'])) {
+        $dsn .= ';sslmode=' . $options['sslmode'];
+    }
+
+    $pdo = new PDO($dsn, $p['user'] ?? '', rawurldecode($p['pass'] ?? ''), [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);

@@ -5,16 +5,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/db.php';
 
-// Load .env
-$env_file = __DIR__ . '/../.env';
-if (file_exists($env_file)) {
-    foreach (file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
-        [$key, $val] = explode('=', $line, 2);
-        putenv(trim($key) . '=' . trim($val));
-    }
-}
-
 $DATA_DIR = __DIR__ . '/../data';
 $db = get_db();
 
