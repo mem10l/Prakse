@@ -1,4 +1,7 @@
 <?php declare(strict_types=1); ?>
+<?php
+$baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.");
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +19,7 @@
 
   <div class="flex items-center justify-between mb-2">
     <h1 class="text-4xl font-bold text-gray-900">Northwind Database</h1>
-    <a href="/insert" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
+    <a href="<?= $baseUrl ?>/insert" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
       + Insert data
     </a>
   </div>
@@ -59,6 +62,7 @@
 </div>
 
 <script>
+const API_BASE = '<?= rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.") ?>';
 const ROW_H = 37, OVERSCAN = 5;
 // Cache: tableName -> { total, pages: { pageNum: rows[] } }
 const cache = {};
@@ -76,7 +80,11 @@ async function fetchPage(table, page) {
   if (!cache[table]) cache[table] = { total: 0, pages: {} };
   if (cache[table].pages[page]) return;
 
-  const res  = await fetch(`/api/table/${table}?page=${page}&limit=${PAGE_SIZE}`);
+  const res = await fetch(`${API_BASE}/api/table/${table}?page=${page}&limit=${PAGE_SIZE}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Server returned ${res.status}: ${text.slice(0, 100)}`);
+  }
   const data = await res.json();
   cache[table].total = data.total;
   cache[table].pages[page] = data.rows;
@@ -93,56 +101,68 @@ async function init(containerId) {
   const el    = document.getElementById(containerId);
   const table = el.dataset.table;
   const cols  = el.dataset.cols.split(',');
+  const countEl = document.getElementById(table + '-count');
 
-  // Fetch first page to get total
-  await fetchPage(table, 1);
-  const total = cache[table].total;
-  document.getElementById(table + '-count').textContent = total.toLocaleString() + ' rows';
+  try {
+    // Fetch first page to get total
+    await fetchPage(table, 1);
+    const total = cache[table].total;
+    countEl.textContent = total.toLocaleString() + ' rows';
 
-  const spacer = document.createElement('div');
-  spacer.className = 'vs-spacer';
-  spacer.style.height = (total * ROW_H) + 'px';
-  el.appendChild(spacer);
+    const spacer = document.createElement('div');
+    spacer.className = 'vs-spacer';
+    spacer.style.height = (total * ROW_H) + 'px';
+    el.appendChild(spacer);
 
-  const wrap = document.createElement('div');
-  wrap.className = 'vs-visible';
-  el.appendChild(wrap);
+    const wrap = document.createElement('div');
+    wrap.className = 'vs-visible';
+    el.appendChild(wrap);
 
-  async function render() {
-    const scrollTop = el.scrollTop;
-    const height    = el.clientHeight;
-    const start     = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
-    const end       = Math.min(total, Math.ceil((scrollTop + height) / ROW_H) + OVERSCAN);
+    async function render() {
+      const scrollTop = el.scrollTop;
+      const height    = el.clientHeight;
+      const start     = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
+      const end       = Math.min(total, Math.ceil((scrollTop + height) / ROW_H) + OVERSCAN);
 
-    // Pre-fetch any needed pages
-    const startPage = Math.floor(start / PAGE_SIZE) + 1;
-    const endPage   = Math.floor((end - 1) / PAGE_SIZE) + 1;
-    await Promise.all(
-      Array.from({ length: endPage - startPage + 1 }, (_, i) => fetchPage(table, startPage + i))
-    );
+      try {
+        // Pre-fetch any needed pages
+        const startPage = Math.floor(start / PAGE_SIZE) + 1;
+        const endPage   = Math.floor((end - 1) / PAGE_SIZE) + 1;
+        await Promise.all(
+          Array.from({ length: endPage - startPage + 1 }, (_, i) => fetchPage(table, startPage + i))
+        );
 
-    wrap.style.top = (start * ROW_H) + 'px';
-    const t  = document.createElement('table');
-    t.className = 'w-full text-sm';
-    const tb = document.createElement('tbody');
+        wrap.style.top = (start * ROW_H) + 'px';
+        const t  = document.createElement('table');
+        t.className = 'w-full text-sm';
+        const tb = document.createElement('tbody');
 
-    for (let i = start; i < end; i++) {
-      const row = getRow(table, i);
-      const tr  = document.createElement('tr');
-      tr.className  = 'border-t hover:bg-gray-50';
-      tr.style.height = ROW_H + 'px';
-      tr.innerHTML = cols.map(c =>
-        `<td class="px-4 py-2 truncate max-w-xs">${fmtCell(row ? row[c] : '…')}</td>`
-      ).join('');
-      tb.appendChild(tr);
+        for (let i = start; i < end; i++) {
+          const row = getRow(table, i);
+          const tr  = document.createElement('tr');
+          tr.className  = 'border-t hover:bg-gray-50';
+          tr.style.height = ROW_H + 'px';
+          tr.innerHTML = cols.map(c =>
+            `<td class="px-4 py-2 truncate max-w-xs">${fmtCell(row ? row[c] : '…')}</td>`
+          ).join('');
+          tb.appendChild(tr);
+        }
+        t.appendChild(tb);
+        wrap.innerHTML = '';
+        wrap.appendChild(t);
+      } catch (e) {
+        console.error(e);
+      }
     }
-    t.appendChild(tb);
-    wrap.innerHTML = '';
-    wrap.appendChild(t);
-  }
 
-  el.addEventListener('scroll', render);
-  render();
+    el.addEventListener('scroll', render);
+    render();
+  } catch (e) {
+    console.error(e);
+    countEl.textContent = 'Error loading data';
+    countEl.classList.add('text-red-500');
+    countEl.title = e.message;
+  }
 }
 
 <?php foreach (array_keys($tables) as $tbl): ?>

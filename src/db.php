@@ -23,7 +23,7 @@ function get_db(): PDO
 
     $url = getenv('DATABASE_URL');
     if (!$url) {
-        $url = 'postgresql://neondb_owner:npg_CZVv6XFu8QjM@ep-green-violet-aqyhtco2-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require';
+        $url = 'postgresql://neondb_owner:npg_CZVv6XFu8QjM@ep-green-violet-aqyhtco2-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
     }
 
     $p = parse_url($url);

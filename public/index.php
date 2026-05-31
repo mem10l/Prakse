@@ -14,26 +14,52 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/schema.php';
 
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$path = rtrim($path, '/') ?: '/';
+$uri  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path = $uri;
 
+// Detect the actual base path by looking for 'public' in the script name
+$script = $_SERVER['SCRIPT_NAME']; // e.g. /my-app/public/index.php
+$base = '';
+
+if (strpos($script, '/public/') !== false) {
+    $base = substr($script, 0, strpos($script, '/public/') + 7);
+}
+
+if ($base !== '' && strpos($uri, $base) === 0) {
+    $path = substr($uri, strlen($base));
+}
+
+// Remove index.php if present
+$path = str_replace('/index.php', '', $path);
+$path = '/' . ltrim($path, '/');
+$path = rtrim($path, '/') ?: '/';
 // ── Router ────────────────────────────────────────────────────────────────────
 
-match (true) {
-    $path === '/'                                      => redirect('/view'),
-    $path === '/view'                                  => require __DIR__ . '/view.php',
-    $path === '/insert'                                => require __DIR__ . '/insert.php',
-    $path === '/api/health'                            => json_response(['status' => 'ok']),
-    preg_match('#^/api/insert/(\w+)$#', $path, $m)    => handle_insert($m[1]),
-    preg_match('#^/api/table/(\w+)$#', $path, $m)     => handle_table_data($m[1]),
-    default                                            => not_found(),
-};
+if ($path === '/') {
+    redirect('/view');
+} elseif ($path === '/view') {
+    require __DIR__ . '/view.php';
+} elseif ($path === '/insert') {
+    require __DIR__ . '/insert.php';
+} elseif ($path === '/api/health') {
+    json_response(['status' => 'ok']);
+} elseif (strpos($path, '/api/insert/') === 0) {
+    $table = substr($path, 12);
+    handle_insert($table);
+} elseif (strpos($path, '/api/table/') === 0) {
+    $table = substr($path, 11);
+    handle_table_data($table);
+} else {
+    not_found();
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function redirect(string $to): void
 {
-    header("Location: $to", true, 302);
+    global $base;
+    $target = rtrim($base, '/') . '/' . ltrim($to, '/');
+    header("Location: $target", true, 302);
     exit;
 }
 
@@ -51,7 +77,7 @@ function json_response(mixed $data, int $status = 200): void
 function not_found(): void
 {
     http_response_code(404);
-    echo '404 Not Found';
+    echo "404 Not Found";
     exit;
 }
 

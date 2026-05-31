@@ -4,6 +4,7 @@ if (!defined('TABLES_LOADED')) {
     require_once __DIR__ . '/../src/schema.php';
     define('TABLES_LOADED', true);
 }
+$baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +18,7 @@ if (!defined('TABLES_LOADED')) {
 
   <div class="flex items-center justify-between mb-2">
     <h1 class="text-3xl font-bold text-gray-900">Northwind Data Inserter</h1>
-    <a href="/view" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition">
+    <a href="<?= $baseUrl ?>/view" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition">
       ← View data
     </a>
   </div>
@@ -77,6 +78,7 @@ if (!defined('TABLES_LOADED')) {
 <script>
 const TABLES = <?= json_encode(TABLES) ?>;
 
+const API_BASE = '<?= rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.") ?>';
 const EXAMPLES = {
   categories:   { json: JSON.stringify([{ categoryname: "Beverages", description: "Soft drinks and teas" }], null, 2),
                   csv:  "categoryname,description\nBeverages,Soft drinks and teas" },
@@ -134,7 +136,7 @@ insertBtn.addEventListener('click', async () => {
   result.textContent    = 'Working…';
 
   try {
-    const res  = await fetch('/api/insert/' + table, {
+    const res  = await fetch(API_BASE + '/api/insert/' + table, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ format, data }),
