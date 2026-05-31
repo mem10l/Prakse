@@ -3,25 +3,39 @@
 Northwind database viewer and data inserter built with **PHP 8.1+** and **PostgreSQL** (PDO).
 No framework, no Composer dependencies — just PHP and a PostgreSQL connection.
 
+**Live demo:** https://prakse-mem10l.wasmer.app/view
+
 ## Requirements
 
 - PHP 8.1+ with `pdo_pgsql` extension enabled
-- PostgreSQL database
+- PostgreSQL database (pre-configured for **Neon** — no local install needed)
 - A web server (Apache with `mod_rewrite`, Nginx, or PHP's built-in server)
 
 ## Setup
 
-The application is pre-configured to use a **Neon PostgreSQL** database by default. No local PostgreSQL installation is required.
+### 1. Configure the database
 
-### 1. Initialize the database
+Copy `.env.example` to `.env` and fill in your Neon connection string:
 
-Run the setup script to create the schema and load the seed data into Neon:
+```bash
+cp .env.example .env
+```
+
+### 2. Initialize the database
+
+Run the setup script to create the schema (13 tables) and load all CSV seed data:
 
 ```bash
 php setup.php
 ```
 
-### 2. Start the server
+To verify the connection and list tables without seeding:
+
+```bash
+php test_db.php
+```
+
+### 3. Start the server
 
 **PHP built-in server (quickest for local dev):**
 
@@ -32,7 +46,7 @@ php -S localhost:8000 router.php
 **Apache** — point `DocumentRoot` to `public/`, ensure `mod_rewrite` is on.
 The included `.htaccess` handles routing automatically.
 
-**Nginx** — add a try_files rule:
+**Nginx** — add a `try_files` rule:
 
 ```nginx
 location / {
@@ -44,30 +58,41 @@ Open **http://localhost:8000**
 
 ## Routes
 
-| Route                     | Description                                       |
-|---------------------------|---------------------------------------------------|
-| `GET /view`               | Virtualised table viewer                          |
-| `GET /insert`             | Paste JSON or CSV to bulk-insert                  |
-| `POST /api/insert/:table` | JSON API: `{ "format": "json"|"csv", "data": "" }`|
-| `GET /api/table/:table`   | Paginated JSON rows (`?page=1&limit=100`)         |
-| `GET /api/health`         | `{ "status": "ok" }`                             |
+| Route                      | Description                                        |
+|----------------------------|----------------------------------------------------|
+| `GET /view`                | Virtualised table viewer                           |
+| `GET /insert`              | Paste JSON or CSV to bulk-insert into any table    |
+| `POST /api/insert/:table`  | JSON API: `{ "format": "json"\|"csv", "data": "" }`|
+| `GET /api/table/:table`    | Paginated JSON rows (`?page=1&limit=100`)          |
+| `GET /api/health`          | `{ "status": "ok" }`                              |
+
+## Tables
+
+The database contains 13 Northwind tables, seeded from CSV files in `data/`:
+
+`categories`, `customers`, `customerdemographics`, `customercustomerdemo`,
+`employees`, `employeeterritories`, `orders`, `order_details`,
+`products`, `region`, `shippers`, `suppliers`, `territories`
 
 ## Project structure
 
 ```
 northwind-php/
-  data/                   CSV seed files (one per table)
+  data/                        CSV seed files (one per table, 13 total)
   scripts/
-    seed.sql              CREATE TABLE statements
-    load-csv.php          CLI script to load CSVs into PostgreSQL
+    seed.sql                   CREATE TABLE statements for all 13 tables
+    load-csv.php               CLI script to load CSVs into PostgreSQL
   src/
-    db.php                PDO connection (singleton)
-    schema.php            TABLES constant (columns + required)
+    db.php                     PDO connection (singleton, reads .env)
+    schema.php                 TABLES constant — columns & required fields
   public/
-    .htaccess             Apache rewrite rules
-    index.php             Front controller + router + API handlers
-    view.php              Viewer UI
-    insert.php            Inserter UI
+    .htaccess                  Apache rewrite rules
+    index.php                  Front controller, router, and API handlers
+    view.php                   Virtualised table viewer UI
+    insert.php                 Bulk-insert UI (JSON or CSV input)
+  router.php                   Dev-server router (php -S)
+  setup.php                    One-shot: create schema + seed all CSVs
+  test_db.php                  Quick connection check + table list
   .env.example
   .gitignore
 ```
