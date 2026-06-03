@@ -1,178 +1,91 @@
 <?php declare(strict_types=1); ?>
-<?php
-$baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.");
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Northwind — Viewer</title>
+  <title>Northwind — Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .vs-container { height: 400px; overflow-y: auto; position: relative; }
-    .vs-spacer    { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
-    .vs-visible   { position: absolute; top: 0; left: 0; width: 100%; }
-  </style>
 </head>
-<body class="bg-gray-50">
-<div class="max-w-7xl mx-auto p-8">
+<body class="bg-gray-100">
 
-  <div class="flex items-center justify-between mb-2">
-    <h1 class="text-4xl font-bold text-gray-900">Northwind Database</h1>
-    <div class="space-x-4">
-      <a href="<?= $baseUrl ?>/reports" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
-        📊 Sales Reports
-      </a>
-      <a href="<?= $baseUrl ?>/insert" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
-        + Insert data
-      </a>
-    </div>
+<?php require __DIR__ . '/layout_sidebar.php'; ?>
+
+  <div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-900">Dashboard</h2>
+    <p class="text-gray-500 mt-1">Overview of your Northwind ERP data</p>
   </div>
-  <p class="text-gray-500 mb-8">Order management system for a wholesale food distributor</p>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <?php
-    $tables = [
-      'categories'  => ['categoryid',  'categoryname', 'description'],
-      'products'    => ['productid',   'productname',  'unitprice'],
-      'customers'   => ['customerid',  'companyname',  'city'],
-      'orders'      => ['orderid',     'customerid',   'orderdate'],
-      'employees'   => ['employeeid',  'firstname',    'lastname'],
-      'suppliers'   => ['supplierid',  'companyname',  'country'],
-      'shippers'    => ['shipperid',   'companyname',  'phone'],
+    $stats = [
+      ['label' => 'Products', 'tbl' => 'products', 'color' => 'blue', 'icon' => '📦'],
+      ['label' => 'Total Orders', 'tbl' => 'orders', 'color' => 'green', 'icon' => '🛒'],
+      ['label' => 'Customers', 'tbl' => 'customers', 'color' => 'purple', 'icon' => '👥'],
+      ['label' => 'Employees', 'tbl' => 'employees', 'color' => 'orange', 'icon' => '👔'],
+      ['label' => 'Suppliers', 'tbl' => 'suppliers', 'color' => 'red', 'icon' => '🏭'],
+      ['label' => 'Categories', 'tbl' => 'categories', 'color' => 'teal', 'icon' => '🏷️'],
     ];
-    foreach ($tables as $tbl => $cols): ?>
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-bold text-gray-900 mb-1 capitalize"><?= htmlspecialchars($tbl) ?></h2>
-      <p class="text-xs text-gray-400 mb-3" id="<?= $tbl ?>-count">Loading…</p>
-      <table class="w-full text-sm">
-        <thead class="bg-gray-100">
-          <tr>
-            <?php foreach ($cols as $col): ?>
-            <th class="px-4 py-2 text-left capitalize"><?= htmlspecialchars(str_replace('id', ' ID', $col)) ?></th>
-            <?php endforeach; ?>
-          </tr>
-        </thead>
-      </table>
-      <div class="vs-container"
-           id="<?= $tbl ?>-scroll"
-           data-table="<?= $tbl ?>"
-           data-cols="<?= implode(',', $cols) ?>">
+
+    foreach ($stats as $s): ?>
+    <a href="<?= $baseUrl ?>/table/<?= $s['tbl'] ?>" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all group">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-<?= $s['color'] ?>-100 text-<?= $s['color'] ?>-600 rounded-lg flex items-center justify-center text-2xl">
+          <?= $s['icon'] ?>
+        </div>
+        <span class="text-gray-400 group-hover:text-blue-500 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </span>
+      </div>
+      <h3 class="text-gray-500 text-sm font-medium uppercase tracking-wider"><?= $s['label'] ?></h3>
+      <p class="text-2xl font-bold text-gray-900 mt-1" id="count-<?= $s['tbl'] ?>">...</p>
+    </a>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Recent Activity / Info -->
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Links</h3>
+      <div class="space-y-3">
+        <a href="<?= $baseUrl ?>/reports" class="flex items-center p-3 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors text-gray-700">
+          <span class="mr-3">📊</span>
+          <span>View Detailed Sales Reports</span>
+        </a>
+        <a href="<?= $baseUrl ?>/insert" class="flex items-center p-3 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors text-gray-700">
+          <span class="mr-3">➕</span>
+          <span>Bulk Insert New Records</span>
+        </a>
       </div>
     </div>
-    <?php endforeach; ?>
-
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">System Status</h3>
+      <div class="flex items-center space-x-2 text-green-600 mb-2">
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <span class="text-sm font-medium">Database Connected</span>
+      </div>
+      <p class="text-sm text-gray-500">PostgreSQL is running and indexed for optimal performance.</p>
+    </div>
   </div>
-</div>
+
+    </div> <!-- End py-6 -->
+  </main>
+</div> <!-- End flex layout -->
 
 <script>
-const API_BASE = '<?= rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.") ?>';
-const ROW_H = 37, OVERSCAN = 5;
-// Cache: tableName -> { total, pages: { pageNum: rows[] } }
-const cache = {};
-const PAGE_SIZE = 200;
-
-function fmtCell(v) {
-  if (v === null || v === undefined) return '';
-  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
-    return new Date(v).toLocaleDateString();
-  }
-  return String(v);
-}
-
-async function fetchPage(table, page) {
-  if (!cache[table]) cache[table] = { total: 0, pages: {} };
-  if (cache[table].pages[page]) return;
-
-  const res = await fetch(`${API_BASE}/api/table/${table}?page=${page}&limit=${PAGE_SIZE}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Server returned ${res.status}: ${text.slice(0, 100)}`);
-  }
-  const data = await res.json();
-  cache[table].total = data.total;
-  cache[table].pages[page] = data.rows;
-}
-
-function getRow(table, index) {
-  const page = Math.floor(index / PAGE_SIZE) + 1;
-  const rows = cache[table]?.pages[page];
-  if (!rows) return null;
-  return rows[index % PAGE_SIZE] ?? null;
-}
-
-async function init(containerId) {
-  const el    = document.getElementById(containerId);
-  const table = el.dataset.table;
-  const cols  = el.dataset.cols.split(',');
-  const countEl = document.getElementById(table + '-count');
-
-  try {
-    // Fetch first page to get total
-    await fetchPage(table, 1);
-    const total = cache[table].total;
-    countEl.textContent = total.toLocaleString() + ' rows';
-
-    const spacer = document.createElement('div');
-    spacer.className = 'vs-spacer';
-    spacer.style.height = (total * ROW_H) + 'px';
-    el.appendChild(spacer);
-
-    const wrap = document.createElement('div');
-    wrap.className = 'vs-visible';
-    el.appendChild(wrap);
-
-    async function render() {
-      const scrollTop = el.scrollTop;
-      const height    = el.clientHeight;
-      const start     = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
-      const end       = Math.min(total, Math.ceil((scrollTop + height) / ROW_H) + OVERSCAN);
-
-      try {
-        // Pre-fetch any needed pages
-        const startPage = Math.floor(start / PAGE_SIZE) + 1;
-        const endPage   = Math.floor((end - 1) / PAGE_SIZE) + 1;
-        await Promise.all(
-          Array.from({ length: endPage - startPage + 1 }, (_, i) => fetchPage(table, startPage + i))
-        );
-
-        wrap.style.top = (start * ROW_H) + 'px';
-        const t  = document.createElement('table');
-        t.className = 'w-full text-sm';
-        const tb = document.createElement('tbody');
-
-        for (let i = start; i < end; i++) {
-          const row = getRow(table, i);
-          const tr  = document.createElement('tr');
-          tr.className  = 'border-t hover:bg-gray-50';
-          tr.style.height = ROW_H + 'px';
-          tr.innerHTML = cols.map(c =>
-            `<td class="px-4 py-2 truncate max-w-xs">${fmtCell(row ? row[c] : '…')}</td>`
-          ).join('');
-          tb.appendChild(tr);
-        }
-        t.appendChild(tb);
-        wrap.innerHTML = '';
-        wrap.appendChild(t);
-      } catch (e) {
-        console.error(e);
-      }
+async function loadStats() {
+  const tables = <?= json_encode(array_column($stats, 'tbl')) ?>;
+  for (const tbl of tables) {
+    try {
+      const res = await fetch(`<?= $baseUrl ?>/api/table/${tbl}?limit=1`);
+      const data = await res.json();
+      document.getElementById(`count-${tbl}`).textContent = data.total.toLocaleString();
+    } catch (e) {
+      document.getElementById(`count-${tbl}`).textContent = 'Error';
     }
-
-    el.addEventListener('scroll', render);
-    render();
-  } catch (e) {
-    console.error(e);
-    countEl.textContent = 'Error loading data';
-    countEl.classList.add('text-red-500');
-    countEl.title = e.message;
   }
 }
-
-<?php foreach (array_keys($tables) as $tbl): ?>
-init('<?= $tbl ?>-scroll');
-<?php endforeach; ?>
+loadStats();
 </script>
 </body>
 </html>

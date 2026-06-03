@@ -1,7 +1,4 @@
 <?php declare(strict_types=1); ?>
-<?php
-$baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.");
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,67 +6,73 @@ $baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.")
   <title>Northwind — Reports</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-<div class="max-w-7xl mx-auto p-8">
+<body class="bg-gray-100">
 
-  <div class="flex items-center justify-between mb-2">
-    <h1 class="text-4xl font-bold text-gray-900">Sales Reports</h1>
-    <div class="space-x-4">
-      <a href="<?= $baseUrl ?>/view" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-semibold rounded-lg hover:bg-gray-300 transition">
-        Back to Viewer
-      </a>
-    </div>
+<?php require __DIR__ . '/layout_sidebar.php'; ?>
+
+  <div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-900">Sales Reports</h2>
+    <p class="text-gray-500 mt-1">Analyze monthly revenue and order volume</p>
   </div>
-  <p class="text-gray-500 mb-8">Monthly order summaries and performance metrics</p>
 
-  <div class="mb-8 flex flex-wrap items-end gap-4">
-    <div>
-      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Group By</label>
-      <div class="flex space-x-2">
-        <button onclick="updateReportType('customer')" id="btn-customer" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
-          Customer
-        </button>
-        <button onclick="updateReportType('region')" id="btn-region" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition">
-          Region
-        </button>
+  <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="flex flex-wrap items-end gap-6">
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Group Data By</label>
+        <div class="inline-flex p-1 bg-gray-100 rounded-lg">
+          <button onclick="updateReportType('customer')" id="btn-customer" class="px-4 py-2 text-sm font-semibold rounded-md transition-all">
+            Customer
+          </button>
+          <button onclick="updateReportType('region')" id="btn-region" class="px-4 py-2 text-sm font-semibold rounded-md transition-all">
+            Region
+          </button>
+        </div>
       </div>
-    </div>
-    
-    <div>
-      <label for="from" class="block text-xs font-bold text-gray-500 uppercase mb-1">From</label>
-      <input type="date" id="from" onchange="loadReport()" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-    </div>
+      
+      <div>
+        <label for="from" class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Start Date</label>
+        <input type="date" id="from" onchange="loadReport()" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+      </div>
 
-    <div>
-      <label for="to" class="block text-xs font-bold text-gray-500 uppercase mb-1">To</label>
-      <input type="date" id="to" onchange="loadReport()" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-    </div>
+      <div>
+        <label for="to" class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">End Date</label>
+        <input type="date" id="to" onchange="loadReport()" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+      </div>
 
-    <button onclick="resetFilters()" class="px-4 py-2 text-sm text-blue-600 hover:underline">
-      Clear Filters
-    </button>
+      <button onclick="resetFilters()" class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+        Reset Filters
+      </button>
+    </div>
   </div>
 
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="w-full text-sm">
-      <thead id="report-head" class="bg-gray-100 border-b">
-        <!-- Will be populated dynamically -->
-      </thead>
-      <tbody id="report-body" class="divide-y divide-gray-200">
-        <!-- Will be populated dynamically -->
-      </tbody>
-    </table>
-    <div id="loader" class="hidden p-8 text-center text-gray-500">
-      Loading report data...
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead id="report-head" class="bg-gray-50 border-b border-gray-200">
+          <!-- Will be populated dynamically -->
+        </thead>
+        <tbody id="report-body" class="divide-y divide-gray-100">
+          <!-- Will be populated dynamically -->
+        </tbody>
+      </table>
     </div>
-    <div id="no-data" class="hidden p-8 text-center text-gray-500">
-      No data found for this report.
+    <div id="loader" class="hidden p-12 text-center">
+      <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-500 font-medium">Loading report data...</p>
+    </div>
+    <div id="no-data" class="hidden p-12 text-center text-gray-500">
+      <span class="text-4xl block mb-4">🔍</span>
+      <p class="font-medium text-lg">No results found</p>
+      <p class="text-sm">Try adjusting your date range or grouping.</p>
     </div>
   </div>
-</div>
+
+    </div> <!-- End py-6 -->
+  </main>
+</div> <!-- End flex layout -->
 
 <script>
-const API_BASE = '<?= rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.") ?>';
+const API_BASE = '<?= $baseUrl ?>';
 let currentType = 'customer';
 
 function updateReportType(type) {
@@ -89,8 +92,11 @@ async function loadReport() {
   const to = document.getElementById('to').value;
 
   // Update UI buttons
-  document.getElementById('btn-customer').className = type === 'customer' ? 'px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition' : 'px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition';
-  document.getElementById('btn-region').className = type === 'region' ? 'px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition' : 'px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition';
+  const activeClass = 'bg-white text-blue-600 shadow-sm';
+  const inactiveClass = 'text-gray-500 hover:text-gray-700';
+  
+  document.getElementById('btn-customer').className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${type === 'customer' ? activeClass : inactiveClass}`;
+  document.getElementById('btn-region').className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${type === 'region' ? activeClass : inactiveClass}`;
 
   const head = document.getElementById('report-head');
   const body = document.getElementById('report-body');
@@ -101,25 +107,15 @@ async function loadReport() {
   loader.classList.remove('hidden');
   noData.classList.add('hidden');
 
-  if (type === 'customer') {
-    head.innerHTML = `
-      <tr>
-        <th class="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Client</th>
-        <th class="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Month</th>
-        <th class="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider">Orders</th>
-        <th class="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider">Total Sum</th>
-      </tr>
-    `;
-  } else {
-    head.innerHTML = `
-      <tr>
-        <th class="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Region</th>
-        <th class="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Month</th>
-        <th class="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider">Orders</th>
-        <th class="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider">Total Sum</th>
-      </tr>
-    `;
-  }
+  const firstColLabel = type === 'customer' ? 'Client / Company' : 'Region';
+  head.innerHTML = `
+    <tr>
+      <th class="px-6 py-4 text-left font-bold text-gray-600 uppercase tracking-wider">${firstColLabel}</th>
+      <th class="px-6 py-4 text-left font-bold text-gray-600 uppercase tracking-wider">Month</th>
+      <th class="px-6 py-4 text-right font-bold text-gray-600 uppercase tracking-wider">Order Volume</th>
+      <th class="px-6 py-4 text-right font-bold text-gray-600 uppercase tracking-wider">Total Revenue</th>
+    </tr>
+  `;
 
   try {
     let url = `${API_BASE}/api/reports/sales?by=${type}`;
@@ -137,15 +133,15 @@ async function loadReport() {
 
     data.rows.forEach(row => {
       const tr = document.createElement('tr');
-      tr.className = 'hover:bg-gray-50 transition-colors';
+      tr.className = 'hover:bg-blue-50/30 transition-colors';
       
       const firstCol = type === 'customer' ? row.client : row.region;
       
       tr.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">${firstCol}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-gray-600">${row.month}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">${row.order_count}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-900 font-semibold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">${firstCol}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">${row.month}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">${parseInt(row.order_count).toLocaleString()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-blue-600 font-bold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
       `;
       body.appendChild(tr);
     });
