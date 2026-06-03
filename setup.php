@@ -81,30 +81,58 @@ function load(PDO $pdo, string $table, array $rows, callable $transform): void
 {
     if (!$rows) { echo "  -  $table: no data\n"; return; }
 
-    $inserted = 0;
-    $skipped  = 0;
+    $batchSize = 500;
+    $totalInserted = 0;
+    $totalSkipped = 0;
 
-    foreach ($rows as $raw) {
-        $row = $transform($raw);
-        if ($row === null) { $skipped++; continue; }
+    $chunks = array_chunk($rows, $batchSize);
 
-        $cols         = array_keys($row);
-        $colList      = implode(', ', array_map(fn($c) => "\"$c\"", $cols));
-        $placeholders = implode(', ', array_map(fn($c) => ":$c", $cols));
-
+    foreach ($chunks as $chunk) {
+        $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare(
-                "INSERT INTO \"$table\" ($colList) VALUES ($placeholders) ON CONFLICT DO NOTHING"
-            );
-            $stmt->execute($row);
-            $inserted++;
+            $processedRows = [];
+            foreach ($chunk as $raw) {
+                $row = $transform($raw);
+                if ($row !== null) $processedRows[] = $row;
+            }
+
+            if (empty($processedRows)) {
+                $pdo->commit();
+                continue;
+            }
+
+            $cols = array_keys($processedRows[0]);
+            $colList = implode(', ', array_map(fn($c) => "\"$c\"", $cols));
+            
+            $valuesSql = [];
+            $allParams = [];
+            foreach ($processedRows as $i => $row) {
+                $placeholders = [];
+                foreach ($cols as $col) {
+                    $paramName = "r{$i}_{$col}";
+                    $placeholders[] = ":$paramName";
+                    $allParams[$paramName] = $row[$col];
+                }
+                $valuesSql[] = "(" . implode(', ', $placeholders) . ")";
+            }
+
+            $sql = "INSERT INTO \"$table\" ($colList) VALUES " . implode(', ', $valuesSql) . " ON CONFLICT DO NOTHING";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($allParams);
+            
+            $inserted = $stmt->rowCount();
+            $totalInserted += $inserted;
+            $totalSkipped += (count($processedRows) - $inserted);
+            
+            $pdo->commit();
         } catch (Throwable $e) {
-            echo "  ⚠  $table row skipped: " . explode("\n", $e->getMessage())[0] . "\n";
-            $skipped++;
+            $pdo->rollBack();
+            echo "  ⚠  Batch skipped in $table: " . explode("\n", $e->getMessage())[0] . "\n";
+            $totalSkipped += count($chunk);
         }
     }
 
-    echo "  ✓  $table: $inserted inserted" . ($skipped ? ", $skipped skipped" : "") . "\n";
+    echo "  ✓  $table: $totalInserted inserted" . ($totalSkipped ? ", $totalSkipped skipped/conflict" : "") . "\n";
 }
 
 // ── Insert in FK-safe order ───────────────────────────────────────────────────

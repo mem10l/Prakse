@@ -39,9 +39,6 @@ if ($path === '/') {
     redirect('/view');
 } elseif ($path === '/view') {
     require __DIR__ . '/view.php';
-} elseif (strpos($path, '/table/') === 0) {
-    $tableName = substr($path, 7);
-    require __DIR__ . '/table.php';
 } elseif ($path === '/reports') {
     require __DIR__ . '/reports.php';
 } elseif ($path === '/insert') {
@@ -56,6 +53,9 @@ if ($path === '/') {
 } elseif (strpos($path, '/api/table/') === 0) {
     $table = substr($path, 11);
     handle_table_data($table);
+} elseif (strpos($path, '/table/') === 0) {
+    $tableName = substr($path, 7);
+    require __DIR__ . '/table.php';
 } else {
     not_found();
 }

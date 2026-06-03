@@ -5,74 +5,77 @@
   <meta charset="UTF-8">
   <title>Northwind — Reports</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .neon-card { background: rgba(26, 26, 26, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+  </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-[#0a0a0a]">
 
-<?php require __DIR__ . '/layout_sidebar.php'; ?>
+<?php require __DIR__ . '/layout_nav.php'; ?>
 
-  <div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-900">Sales Reports</h2>
-    <p class="text-gray-500 mt-1">Analyze monthly revenue and order volume</p>
+  <div class="mb-10">
+    <h2 class="text-4xl font-extrabold text-white tracking-tight">Analytics</h2>
+    <p class="text-gray-500 mt-2 text-lg">Detailed business performance metrics</p>
   </div>
 
-  <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-    <div class="flex flex-wrap items-end gap-6">
+  <div class="neon-card p-8 rounded-2xl mb-8">
+    <div class="flex flex-wrap items-end gap-8">
       <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Group Data By</label>
-        <div class="inline-flex p-1 bg-gray-100 rounded-lg">
-          <button onclick="updateReportType('customer')" id="btn-customer" class="px-4 py-2 text-sm font-semibold rounded-md transition-all">
+        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">Group By</label>
+        <div class="inline-flex p-1 bg-black/40 rounded-xl border border-white/5">
+          <button onclick="updateReportType('customer')" id="btn-customer" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
             Customer
           </button>
-          <button onclick="updateReportType('region')" id="btn-region" class="px-4 py-2 text-sm font-semibold rounded-md transition-all">
+          <button onclick="updateReportType('region')" id="btn-region" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
             Region
           </button>
         </div>
       </div>
       
       <div>
-        <label for="from" class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Start Date</label>
-        <input type="date" id="from" onchange="loadReport()" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        <label for="from" class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">Start Date</label>
+        <input type="date" id="from" onchange="loadReport()" class="px-4 py-2 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#00e599] outline-none text-sm text-white">
       </div>
 
       <div>
-        <label for="to" class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">End Date</label>
-        <input type="date" id="to" onchange="loadReport()" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        <label for="to" class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">End Date</label>
+        <input type="date" id="to" onchange="loadReport()" class="px-4 py-2 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#00e599] outline-none text-sm text-white">
       </div>
 
-      <button onclick="resetFilters()" class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-        Reset Filters
+      <button onclick="resetFilters()" class="px-4 py-2 text-sm font-bold text-[#00e599] hover:text-white transition-colors">
+        Reset filters
       </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="neon-card rounded-2xl overflow-hidden border border-white/5">
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead id="report-head" class="bg-gray-50 border-b border-gray-200">
+      <table class="w-full text-sm text-left">
+        <thead id="report-head" class="bg-white/5 border-b border-white/5 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
           <!-- Will be populated dynamically -->
         </thead>
-        <tbody id="report-body" class="divide-y divide-gray-100">
+        <tbody id="report-body" class="divide-y divide-white/[0.02]">
           <!-- Will be populated dynamically -->
         </tbody>
       </table>
     </div>
-    <div id="loader" class="hidden p-12 text-center">
-      <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="mt-4 text-gray-500 font-medium">Loading report data...</p>
+    <div id="loader" class="hidden p-20 text-center">
+      <div class="inline-block w-10 h-10 border-2 border-[#00e599] border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-6 text-gray-400 font-bold tracking-widest uppercase text-xs">Fetching report...</p>
     </div>
-    <div id="no-data" class="hidden p-12 text-center text-gray-500">
-      <span class="text-4xl block mb-4">🔍</span>
-      <p class="font-medium text-lg">No results found</p>
-      <p class="text-sm">Try adjusting your date range or grouping.</p>
+    <div id="no-data" class="hidden p-20 text-center text-gray-500">
+      <div class="text-5xl mb-6">📉</div>
+      <p class="font-bold text-xl text-white mb-2">No matching data</p>
+      <p class="text-sm">Adjust your filters to see more results.</p>
     </div>
   </div>
 
-    </div> <!-- End py-6 -->
   </main>
-</div> <!-- End flex layout -->
+</div>
 
 <script>
-const API_BASE = '<?= $baseUrl ?>';
 let currentType = 'customer';
 
 function updateReportType(type) {
@@ -91,12 +94,11 @@ async function loadReport() {
   const from = document.getElementById('from').value;
   const to = document.getElementById('to').value;
 
-  // Update UI buttons
-  const activeClass = 'bg-white text-blue-600 shadow-sm';
-  const inactiveClass = 'text-gray-500 hover:text-gray-700';
+  const activeBtn = 'bg-[#00e599] text-black shadow-[0_0_15px_rgba(0,229,153,0.3)]';
+  const inactiveBtn = 'text-gray-500 hover:text-gray-300';
   
-  document.getElementById('btn-customer').className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${type === 'customer' ? activeClass : inactiveClass}`;
-  document.getElementById('btn-region').className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${type === 'region' ? activeClass : inactiveClass}`;
+  document.getElementById('btn-customer').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'customer' ? activeBtn : inactiveBtn}`;
+  document.getElementById('btn-region').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'region' ? activeBtn : inactiveBtn}`;
 
   const head = document.getElementById('report-head');
   const body = document.getElementById('report-body');
@@ -107,18 +109,18 @@ async function loadReport() {
   loader.classList.remove('hidden');
   noData.classList.add('hidden');
 
-  const firstColLabel = type === 'customer' ? 'Client / Company' : 'Region';
+  const firstColLabel = type === 'customer' ? 'Customer / Company' : 'Region Name';
   head.innerHTML = `
     <tr>
-      <th class="px-6 py-4 text-left font-bold text-gray-600 uppercase tracking-wider">${firstColLabel}</th>
-      <th class="px-6 py-4 text-left font-bold text-gray-600 uppercase tracking-wider">Month</th>
-      <th class="px-6 py-4 text-right font-bold text-gray-600 uppercase tracking-wider">Order Volume</th>
-      <th class="px-6 py-4 text-right font-bold text-gray-600 uppercase tracking-wider">Total Revenue</th>
+      <th class="px-8 py-5">${firstColLabel}</th>
+      <th class="px-8 py-5">Accounting Month</th>
+      <th class="px-8 py-5 text-right">Orders</th>
+      <th class="px-8 py-5 text-right">Revenue</th>
     </tr>
   `;
 
   try {
-    let url = `${API_BASE}/api/reports/sales?by=${type}`;
+    let url = `${window.API_BASE}/api/reports/sales?by=${type}`;
     if (from) url += `&from=${from}`;
     if (to) url += `&to=${to}`;
 
@@ -133,22 +135,21 @@ async function loadReport() {
 
     data.rows.forEach(row => {
       const tr = document.createElement('tr');
-      tr.className = 'hover:bg-blue-50/30 transition-colors';
+      tr.className = 'hover:bg-white/[0.03] transition-colors';
       
       const firstCol = type === 'customer' ? row.client : row.region;
       
       tr.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">${firstCol}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">${row.month}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">${parseInt(row.order_count).toLocaleString()}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-blue-600 font-bold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
+        <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${row.month}</td>
+        <td class="px-8 py-5 text-right text-gray-300 font-medium">${parseInt(row.order_count).toLocaleString()}</td>
+        <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
       `;
       body.appendChild(tr);
     });
   } catch (e) {
     loader.classList.add('hidden');
     console.error(e);
-    alert('Failed to load report data');
   }
 }
 
