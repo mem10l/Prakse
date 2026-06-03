@@ -19,9 +19,14 @@ $baseUrl = rtrim(str_replace("\\", "/", dirname($_SERVER['SCRIPT_NAME'])), "/.")
 
   <div class="flex items-center justify-between mb-2">
     <h1 class="text-4xl font-bold text-gray-900">Northwind Database</h1>
-    <a href="<?= $baseUrl ?>/insert" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
-      + Insert data
-    </a>
+    <div class="space-x-4">
+      <a href="<?= $baseUrl ?>/reports" class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
+        📊 Sales Reports
+      </a>
+      <a href="<?= $baseUrl ?>/insert" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
+        + Insert data
+      </a>
+    </div>
   </div>
   <p class="text-gray-500 mb-8">Order management system for a wholesale food distributor</p>
 

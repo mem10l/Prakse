@@ -39,10 +39,14 @@ if ($path === '/') {
     redirect('/view');
 } elseif ($path === '/view') {
     require __DIR__ . '/view.php';
+} elseif ($path === '/reports') {
+    require __DIR__ . '/reports.php';
 } elseif ($path === '/insert') {
     require __DIR__ . '/insert.php';
 } elseif ($path === '/api/health') {
     json_response(['status' => 'ok']);
+} elseif ($path === '/api/reports/sales') {
+    handle_sales_report();
 } elseif (strpos($path, '/api/insert/') === 0) {
     $table = substr($path, 12);
     handle_insert($table);
@@ -100,6 +104,67 @@ function handle_table_data(string $table): void
         $rows  = $db->query("SELECT * FROM \"$table\" LIMIT $limit OFFSET $offset")->fetchAll();
         json_response(['total' => $total, 'rows' => $rows]);
 
+    } catch (Throwable $e) {
+        json_response(['error' => $e->getMessage()], 500);
+    }
+}
+
+function handle_sales_report(): void
+{
+    try {
+        $db = get_db();
+        $groupBy = $_GET['by'] ?? 'customer'; // 'customer' or 'region'
+        $startDate = $_GET['from'] ?? null;
+        $endDate = $_GET['to'] ?? null;
+
+        $where = [];
+        $params = [];
+
+        if ($startDate) {
+            $where[] = "o.orderdate >= :start";
+            $params['start'] = $startDate;
+        }
+        if ($endDate) {
+            $where[] = "o.orderdate <= :end";
+            $params['end'] = $endDate;
+        }
+
+        $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+        
+        if ($groupBy === 'region') {
+            $sql = "
+                SELECT 
+                    COALESCE(c.region, 'Unknown') AS region,
+                    TO_CHAR(o.orderdate, 'YYYY-MM') AS month,
+                    COUNT(DISTINCT o.orderid) AS order_count,
+                    ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_sum
+                FROM orders o
+                JOIN customers c ON o.customerid = c.customerid
+                JOIN order_details od ON o.orderid = od.orderid
+                $whereSql
+                GROUP BY region, month
+                ORDER BY month DESC, total_sum DESC
+            ";
+        } else {
+            $sql = "
+                SELECT 
+                    c.companyname AS client,
+                    TO_CHAR(o.orderdate, 'YYYY-MM') AS month,
+                    COUNT(DISTINCT o.orderid) AS order_count,
+                    ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_sum
+                FROM orders o
+                JOIN customers c ON o.customerid = c.customerid
+                JOIN order_details od ON o.orderid = od.orderid
+                $whereSql
+                GROUP BY c.companyname, month
+                ORDER BY month DESC, total_sum DESC
+            ";
+        }
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+        json_response(['rows' => $rows]);
     } catch (Throwable $e) {
         json_response(['error' => $e->getMessage()], 500);
     }

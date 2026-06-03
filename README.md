@@ -61,9 +61,11 @@ Open **http://localhost:8000**
 | Route                      | Description                                        |
 |----------------------------|----------------------------------------------------|
 | `GET /view`                | Virtualised table viewer                           |
+| `GET /reports`             | Monthly sales reports by customer or region       |
 | `GET /insert`              | Paste JSON or CSV to bulk-insert into any table    |
 | `POST /api/insert/:table`  | JSON API: `{ "format": "json"\|"csv", "data": "" }`|
 | `GET /api/table/:table`    | Paginated JSON rows (`?page=1&limit=100`)          |
+| `GET /api/reports/sales`   | JSON API for monthly sales data                    |
 | `GET /api/health`          | `{ "status": "ok" }`                              |
 
 ## Tables
