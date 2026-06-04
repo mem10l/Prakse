@@ -148,6 +148,20 @@ function handle_sales_report(): void
                 GROUP BY region, month
                 ORDER BY month DESC, total_sum DESC
             ";
+        } elseif ($groupBy === 'employee') {
+            $sql = "
+                SELECT 
+                    e.firstname || ' ' || e.lastname AS employee,
+                    TO_CHAR(o.orderdate, 'YYYY-MM') AS month,
+                    COUNT(DISTINCT o.orderid) AS order_count,
+                    ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_sum
+                FROM orders o
+                JOIN employees e ON o.employeeid = e.employeeid
+                JOIN order_details od ON o.orderid = od.orderid
+                $whereSql
+                GROUP BY employee, month
+                ORDER BY month DESC, total_sum DESC
+            ";
         } else {
             $sql = "
                 SELECT 

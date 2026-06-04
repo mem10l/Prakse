@@ -31,6 +31,9 @@
           <button onclick="updateReportType('region')" id="btn-region" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
             Region
           </button>
+          <button onclick="updateReportType('employee')" id="btn-employee" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
+            Employee
+          </button>
         </div>
       </div>
       
@@ -99,6 +102,7 @@ async function loadReport() {
   
   document.getElementById('btn-customer').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'customer' ? activeBtn : inactiveBtn}`;
   document.getElementById('btn-region').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'region' ? activeBtn : inactiveBtn}`;
+  document.getElementById('btn-employee').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'employee' ? activeBtn : inactiveBtn}`;
 
   const head = document.getElementById('report-head');
   const body = document.getElementById('report-body');
@@ -109,7 +113,10 @@ async function loadReport() {
   loader.classList.remove('hidden');
   noData.classList.add('hidden');
 
-  const firstColLabel = type === 'customer' ? 'Customer / Company' : 'Region Name';
+  let firstColLabel = 'Customer / Company';
+  if (type === 'region') firstColLabel = 'Region Name';
+  if (type === 'employee') firstColLabel = 'Employee Name';
+
   head.innerHTML = `
     <tr>
       <th class="px-8 py-5">${firstColLabel}</th>
@@ -137,7 +144,9 @@ async function loadReport() {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-white/[0.03] transition-colors';
       
-      const firstCol = type === 'customer' ? row.client : row.region;
+      let firstCol = row.client;
+      if (type === 'region') firstCol = row.region;
+      if (type === 'employee') firstCol = row.employee;
       
       tr.innerHTML = `
         <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
