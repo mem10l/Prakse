@@ -102,9 +102,19 @@ function handle_table_data(string $table): void
         $limit  = min(500, max(1, (int)($_GET['limit'] ?? 100)));
         $offset = ($page - 1) * $limit;
 
+        $sort  = $_GET['sort'] ?? null;
+        $order = strtoupper($_GET['order'] ?? 'ASC');
+        if (!in_array($order, ['ASC', 'DESC'])) $order = 'ASC';
+
         $db    = get_db();
         $total = (int)$db->query("SELECT COUNT(*) FROM \"$table\"")->fetchColumn();
-        $rows  = $db->query("SELECT * FROM \"$table\" LIMIT $limit OFFSET $offset")->fetchAll();
+
+        $orderBy = "";
+        if ($sort && in_array(strtolower($sort), TABLES[$table]['columns'])) {
+            $orderBy = "ORDER BY \"$sort\" $order";
+        }
+
+        $rows  = $db->query("SELECT * FROM \"$table\" $orderBy LIMIT $limit OFFSET $offset")->fetchAll();
         json_response(['total' => $total, 'rows' => $rows]);
 
     } catch (Throwable $e) {
@@ -119,6 +129,9 @@ function handle_sales_report(): void
         $groupBy = $_GET['by'] ?? 'customer'; // 'customer' or 'region'
         $startDate = $_GET['from'] ?? null;
         $endDate = $_GET['to'] ?? null;
+        $sort = $_GET['sort'] ?? 'month';
+        $order = strtoupper($_GET['order'] ?? 'DESC');
+        if (!in_array($order, ['ASC', 'DESC'])) $order = 'DESC';
 
         $where = [];
         $params = [];
@@ -134,7 +147,9 @@ function handle_sales_report(): void
 
         $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
         
+        $allowedSorts = ['month', 'order_count', 'total_sum'];
         if ($groupBy === 'region') {
+            $allowedSorts[] = 'region';
             $sql = "
                 SELECT 
                     COALESCE(c.region, 'Unknown') AS region,
@@ -146,9 +161,9 @@ function handle_sales_report(): void
                 JOIN order_details od ON o.orderid = od.orderid
                 $whereSql
                 GROUP BY region, month
-                ORDER BY month DESC, total_sum DESC
             ";
         } elseif ($groupBy === 'employee') {
+            $allowedSorts[] = 'employee';
             $sql = "
                 SELECT 
                     e.firstname || ' ' || e.lastname AS employee,
@@ -160,9 +175,9 @@ function handle_sales_report(): void
                 JOIN order_details od ON o.orderid = od.orderid
                 $whereSql
                 GROUP BY employee, month
-                ORDER BY month DESC, total_sum DESC
             ";
         } else {
+            $allowedSorts[] = 'client';
             $sql = "
                 SELECT 
                     c.companyname AS client,
@@ -174,8 +189,16 @@ function handle_sales_report(): void
                 JOIN order_details od ON o.orderid = od.orderid
                 $whereSql
                 GROUP BY c.companyname, month
-                ORDER BY month DESC, total_sum DESC
             ";
+        }
+
+        if (in_array($sort, $allowedSorts)) {
+            $sql .= " ORDER BY \"$sort\" $order";
+            if ($sort !== 'month') {
+                $sql .= ", month DESC";
+            }
+        } else {
+            $sql .= " ORDER BY month DESC, total_sum DESC";
         }
 
         $stmt = $db->prepare($sql);

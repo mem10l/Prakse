@@ -80,15 +80,31 @@
 
 <script>
 let currentType = 'customer';
+let currentSort = 'month';
+let currentOrder = 'DESC';
 
 function updateReportType(type) {
   currentType = type;
+  currentSort = type === 'customer' ? 'client' : (type === 'region' ? 'region' : 'employee');
+  currentOrder = 'ASC';
+  loadReport();
+}
+
+function toggleSort(col) {
+  if (currentSort === col) {
+    currentOrder = currentOrder === 'ASC' ? 'DESC' : 'ASC';
+  } else {
+    currentSort = col;
+    currentOrder = 'ASC';
+  }
   loadReport();
 }
 
 function resetFilters() {
   document.getElementById('from').value = '';
   document.getElementById('to').value = '';
+  currentSort = 'month';
+  currentOrder = 'DESC';
   loadReport();
 }
 
@@ -114,20 +130,42 @@ async function loadReport() {
   noData.classList.add('hidden');
 
   let firstColLabel = 'Customer / Company';
-  if (type === 'region') firstColLabel = 'Region Name';
-  if (type === 'employee') firstColLabel = 'Employee Name';
+  let firstColKey = 'client';
+  if (type === 'region') { firstColLabel = 'Region Name'; firstColKey = 'region'; }
+  if (type === 'employee') { firstColLabel = 'Employee Name'; firstColKey = 'employee'; }
+
+  const sortIcon = (col) => {
+    if (currentSort !== col) return '↕️';
+    return currentOrder === 'ASC' ? '🔼' : '🔽';
+  };
 
   head.innerHTML = `
     <tr>
-      <th class="px-8 py-5">${firstColLabel}</th>
-      <th class="px-8 py-5">Accounting Month</th>
-      <th class="px-8 py-5 text-right">Orders</th>
-      <th class="px-8 py-5 text-right">Revenue</th>
+      <th class="px-8 py-5">
+        <button onclick="toggleSort('${firstColKey}')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          ${firstColLabel} <span>${sortIcon(firstColKey)}</span>
+        </button>
+      </th>
+      <th class="px-8 py-5">
+        <button onclick="toggleSort('month')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Accounting Month <span>${sortIcon('month')}</span>
+        </button>
+      </th>
+      <th class="px-8 py-5 text-right">
+        <button onclick="toggleSort('order_count')" class="flex items-center gap-2 ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Orders <span>${sortIcon('order_count')}</span>
+        </button>
+      </th>
+      <th class="px-8 py-5 text-right">
+        <button onclick="toggleSort('total_sum')" class="flex items-center gap-2 ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Revenue <span>${sortIcon('total_sum')}</span>
+        </button>
+      </th>
     </tr>
   `;
 
   try {
-    let url = `${window.API_BASE}/api/reports/sales?by=${type}`;
+    let url = `${window.API_BASE}/api/reports/sales?by=${type}&sort=${currentSort}&order=${currentOrder}`;
     if (from) url += `&from=${from}`;
     if (to) url += `&to=${to}`;
 

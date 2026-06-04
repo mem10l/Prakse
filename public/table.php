@@ -53,6 +53,8 @@ const ROW_H = 56, OVERSCAN = 15;
 const cache = { total: 0 };
 const PAGE_SIZE = 100;
 const TABLE_NAME = '<?= $tableName ?>';
+let currentSort = null;
+let currentOrder = 'ASC';
 
 function fmtCell(v) {
   if (v === null || v === undefined) return '';
@@ -67,7 +69,10 @@ function fmtCell(v) {
 
 async function fetchPage(page) {
   if (!cache[page]) {
-    const url = `${API_BASE}/api/table/${TABLE_NAME}?page=${page}&limit=${PAGE_SIZE}`;
+    let url = `${API_BASE}/api/table/${TABLE_NAME}?page=${page}&limit=${PAGE_SIZE}`;
+    if (currentSort) {
+      url += `&sort=${currentSort}&order=${currentOrder}`;
+    }
     const res = await fetch(url);
     if (!res.ok) {
         const text = await res.text();
@@ -79,10 +84,47 @@ async function fetchPage(page) {
   }
 }
 
+let renderFn = null;
+
+async function toggleSort(col) {
+  if (currentSort === col) {
+    currentOrder = currentOrder === 'ASC' ? 'DESC' : 'ASC';
+  } else {
+    currentSort = col;
+    currentOrder = 'ASC';
+  }
+  // Clear cache and re-render
+  Object.keys(cache).forEach(k => { if (k !== 'total') delete cache[k]; });
+  const el = document.getElementById('vs-scroll');
+  el.scrollTop = 0;
+  await fetchPage(1);
+  updateHeaders();
+  if (renderFn) renderFn();
+}
+
+function updateHeaders() {
+  const head = document.getElementById('table-head');
+  const firstRow = cache[1] ? cache[1][0] : null;
+  if (!firstRow) return;
+  const cols = Object.keys(firstRow);
+
+  const sortIcon = (col) => {
+    if (currentSort !== col) return '↕️';
+    return currentOrder === 'ASC' ? '🔼' : '🔽';
+  };
+
+  head.innerHTML = cols.map(c => 
+    `<th class="px-6 py-4">
+      <button onclick="toggleSort('${c}')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold whitespace-nowrap">
+        ${c.replace('id', ' ID')} <span>${sortIcon(c)}</span>
+      </button>
+    </th>`
+  ).join('');
+}
+
 async function init() {
   const el = document.getElementById('vs-scroll');
   const countEl = document.getElementById('table-count');
-  const head = document.getElementById('table-head');
 
   try {
     await fetchPage(1);
@@ -91,9 +133,7 @@ async function init() {
     const cols = Object.keys(firstRow);
 
     countEl.textContent = `${total.toLocaleString()} total records`;
-    head.innerHTML = cols.map(c => 
-      `<th class="px-6 py-4">${c.replace('id', ' ID')}</th>`
-    ).join('');
+    updateHeaders();
 
     const spacer = document.createElement('div');
     spacer.className = 'vs-spacer';
@@ -104,7 +144,7 @@ async function init() {
     wrap.className = 'vs-visible';
     el.appendChild(wrap);
 
-    async function render() {
+    renderFn = async function render() {
       const scrollTop = el.scrollTop;
       const start = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
       const end = Math.min(total, Math.ceil((el.clientHeight + scrollTop) / ROW_H) + OVERSCAN);
@@ -123,7 +163,7 @@ async function init() {
 
       for (let i = start; i < end; i++) {
         const pageNum = Math.floor(i / PAGE_SIZE) + 1;
-        const row = cache[pageNum][i % PAGE_SIZE];
+        const row = cache[pageNum] ? cache[pageNum][i % PAGE_SIZE] : null;
         if (!row) continue;
         
         const tr = document.createElement('tr');
@@ -139,8 +179,8 @@ async function init() {
       wrap.appendChild(t);
     }
 
-    el.addEventListener('scroll', render);
-    render();
+    el.addEventListener('scroll', renderFn);
+    renderFn();
   } catch (e) {
     console.error(e);
     countEl.textContent = 'Connection Error';
