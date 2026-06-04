@@ -135,30 +135,37 @@ async function loadReport() {
   if (type === 'employee') { firstColLabel = 'Employee Name'; firstColKey = 'employee'; }
 
   const sortIcon = (col) => {
-    if (currentSort !== col) return '↕️';
-    return currentOrder === 'ASC' ? '🔼' : '🔽';
+    const isActive = currentSort === col;
+    const isAsc = currentOrder === 'ASC';
+    
+    return `
+      <div class="flex flex-col ml-1.5 opacity-${isActive ? '100' : '20'} group-hover:opacity-100 transition-opacity">
+        <svg class="w-2 h-2 ${isActive && isAsc ? 'text-[#00e599]' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
+        <svg class="w-2 h-2 ${isActive && !isAsc ? 'text-[#00e599]' : 'text-gray-400'} -mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg>
+      </div>
+    `;
   };
 
   head.innerHTML = `
     <tr>
       <th class="px-8 py-5">
-        <button onclick="toggleSort('${firstColKey}')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          ${firstColLabel} <span>${sortIcon(firstColKey)}</span>
+        <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          ${firstColLabel} ${sortIcon(firstColKey)}
         </button>
       </th>
       <th class="px-8 py-5">
-        <button onclick="toggleSort('month')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Accounting Month <span>${sortIcon('month')}</span>
+        <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Accounting Month ${sortIcon('month')}
         </button>
       </th>
       <th class="px-8 py-5 text-right">
-        <button onclick="toggleSort('order_count')" class="flex items-center gap-2 ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Orders <span>${sortIcon('order_count')}</span>
+        <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Orders ${sortIcon('order_count')}
         </button>
       </th>
       <th class="px-8 py-5 text-right">
-        <button onclick="toggleSort('total_sum')" class="flex items-center gap-2 ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Revenue <span>${sortIcon('total_sum')}</span>
+        <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          Revenue ${sortIcon('total_sum')}
         </button>
       </th>
     </tr>

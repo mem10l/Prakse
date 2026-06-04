@@ -103,6 +103,10 @@ function isActive($path, $current) {
 
       <!-- Connection Status -->
       <div class="flex items-center gap-4">
+        <button onclick="toggleWideMode()" id="wide-toggle" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111] border border-white/5 hover:border-[#00e599]/30 transition-all">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+          <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest" id="wide-label">Wide Mode</span>
+        </button>
         <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111] border border-white/5">
           <div class="w-1.5 h-1.5 rounded-full bg-[#00e599] animate-pulse"></div>
           <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Postgres Online</span>
@@ -110,6 +114,41 @@ function isActive($path, $current) {
       </div>
     </div>
   </header>
+
+  <script>
+    function applyWideMode(isWide) {
+      const main = document.querySelector('main');
+      const headerInner = document.querySelector('header > div');
+      const label = document.getElementById('wide-label');
+      
+      if (isWide) {
+        main.classList.remove('max-w-7xl');
+        main.classList.add('max-w-[95%]');
+        headerInner.classList.remove('max-w-7xl');
+        headerInner.classList.add('max-w-[95%]');
+        label.textContent = 'Normal Mode';
+      } else {
+        main.classList.remove('max-w-[95%]');
+        main.classList.add('max-w-7xl');
+        headerInner.classList.remove('max-w-[95%]');
+        headerInner.classList.add('max-w-7xl');
+        label.textContent = 'Wide Mode';
+      }
+    }
+
+    function toggleWideMode() {
+      const isWide = localStorage.getItem('wide-mode') === 'true';
+      const nextWide = !isWide;
+      localStorage.setItem('wide-mode', nextWide);
+      applyWideMode(nextWide);
+    }
+
+    // Initial apply
+    document.addEventListener('DOMContentLoaded', () => {
+      const isWide = localStorage.getItem('wide-mode') === 'true';
+      applyWideMode(isWide);
+    });
+  </script>
 
   <!-- Main Content -->
   <main class="relative py-10 px-6 max-w-7xl mx-auto">

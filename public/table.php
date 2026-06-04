@@ -109,14 +109,21 @@ function updateHeaders() {
   const cols = Object.keys(firstRow);
 
   const sortIcon = (col) => {
-    if (currentSort !== col) return '↕️';
-    return currentOrder === 'ASC' ? '🔼' : '🔽';
+    const isActive = currentSort === col;
+    const isAsc = currentOrder === 'ASC';
+    
+    return `
+      <div class="flex flex-col ml-1.5 opacity-${isActive ? '100' : '20'} group-hover:opacity-100 transition-opacity">
+        <svg class="w-2 h-2 ${isActive && isAsc ? 'text-[#00e599]' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
+        <svg class="w-2 h-2 ${isActive && !isAsc ? 'text-[#00e599]' : 'text-gray-400'} -mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg>
+      </div>
+    `;
   };
 
   head.innerHTML = cols.map(c => 
     `<th class="px-6 py-4">
-      <button onclick="toggleSort('${c}')" class="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold whitespace-nowrap">
-        ${c.replace('id', ' ID')} <span>${sortIcon(c)}</span>
+      <button onclick="toggleSort('${c}')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold whitespace-nowrap">
+        ${c.replace('id', ' ID')} ${sortIcon(c)}
       </button>
     </th>`
   ).join('');
@@ -170,7 +177,7 @@ async function init() {
         tr.className = 'border-b border-white/[0.02] hover:bg-white/[0.03] transition-colors';
         tr.style.height = ROW_H + 'px';
         tr.innerHTML = cols.map(c => 
-          `<td class="px-6 py-2 truncate max-w-xs">${fmtCell(row[c])}</td>`
+          `<td class="px-6 py-2 truncate max-w-[400px] font-medium">${fmtCell(row[c])}</td>`
         ).join('');
         tb.appendChild(tr);
       }
