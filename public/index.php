@@ -220,7 +220,11 @@ function handle_bonus_report(): void
         $db = get_db();
         // Requirements: 0.9% bonus, last 2 years (8 full quarters + current), 
         // sorted by Year DESC, Quarter DESC, Employee ASC.
+        // We use the MAX(orderdate) as the reference point because sample data might be old.
         $sql = "
+            WITH latest_order AS (
+                SELECT MAX(orderdate) as max_date FROM orders
+            )
             SELECT 
                 e.firstname || ' ' || e.lastname AS employee,
                 CAST(EXTRACT(YEAR FROM o.orderdate) AS INTEGER) AS year,
@@ -231,7 +235,8 @@ function handle_bonus_report(): void
             FROM orders o
             JOIN employees e ON o.employeeid = e.employeeid
             JOIN order_details od ON o.orderid = od.orderid
-            WHERE o.orderdate >= date_trunc('quarter', CURRENT_DATE) - INTERVAL '2 years'
+            CROSS JOIN latest_order lo
+            WHERE o.orderdate >= date_trunc('quarter', lo.max_date) - INTERVAL '2 years'
             GROUP BY employee, year, quarter
             ORDER BY year DESC, quarter DESC, employee ASC
         ";
