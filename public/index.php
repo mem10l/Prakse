@@ -41,12 +41,16 @@ if ($path === '/') {
     require __DIR__ . '/view.php';
 } elseif ($path === '/reports') {
     require __DIR__ . '/reports.php';
+} elseif ($path === '/bonuses') {
+    require __DIR__ . '/bonuses.php';
 } elseif ($path === '/insert') {
     require __DIR__ . '/insert.php';
 } elseif ($path === '/api/health') {
     json_response(['status' => 'ok']);
 } elseif ($path === '/api/reports/sales') {
     handle_sales_report();
+} elseif ($path === '/api/reports/bonuses') {
+    handle_bonus_report();
 } elseif (strpos($path, '/api/insert/') === 0) {
     $table = substr($path, 12);
     handle_insert($table);
