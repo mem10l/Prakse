@@ -210,6 +210,36 @@ function handle_sales_report(): void
     }
 }
 
+function handle_bonus_report(): void
+{
+    try {
+        $db = get_db();
+        // Requirements: 0.9% bonus, last 2 years (8 full quarters + current), 
+        // sorted by Year DESC, Quarter DESC, Employee ASC.
+        $sql = "
+            SELECT 
+                e.firstname || ' ' || e.lastname AS employee,
+                CAST(EXTRACT(YEAR FROM o.orderdate) AS INTEGER) AS year,
+                CAST(EXTRACT(QUARTER FROM o.orderdate) AS INTEGER) AS quarter,
+                COUNT(DISTINCT o.orderid) AS order_count,
+                ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_sum,
+                ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)) * 0.009, 2) AS bonus
+            FROM orders o
+            JOIN employees e ON o.employeeid = e.employeeid
+            JOIN order_details od ON o.orderid = od.orderid
+            WHERE o.orderdate >= date_trunc('quarter', CURRENT_DATE) - INTERVAL '2 years'
+            GROUP BY employee, year, quarter
+            ORDER BY year DESC, quarter DESC, employee ASC
+        ";
+
+        $stmt = $db->query($sql);
+        $rows = $stmt->fetchAll();
+        json_response(['rows' => $rows]);
+    } catch (Throwable $e) {
+        json_response(['error' => $e->getMessage()], 500);
+    }
+}
+
 // ── POST /api/insert/:table ───────────────────────────────────────────────────
 
 function handle_insert(string $table): void

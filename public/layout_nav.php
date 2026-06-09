@@ -44,6 +44,7 @@ $currentPath = '/' . ltrim($currentPath, '/');
 $navItems = [
     ['label' => 'Dashboard', 'path' => '/view'],
     ['label' => 'Reports', 'path' => '/reports'],
+    ['label' => 'Bonuses', 'path' => '/bonuses'],
     ['label' => 'Insert Data', 'path' => '/insert'],
 ];
 
