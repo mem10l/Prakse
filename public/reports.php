@@ -34,6 +34,9 @@
           <button onclick="updateReportType('employee')" id="btn-employee" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
             Employee
           </button>
+          <button onclick="updateReportType('top_products')" id="btn-top_products" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
+            Top Products
+          </button>
         </div>
       </div>
       
@@ -85,12 +88,18 @@ let currentOrder = 'DESC';
 
 function updateReportType(type) {
   currentType = type;
-  currentSort = type === 'customer' ? 'client' : (type === 'region' ? 'region' : 'employee');
-  currentOrder = 'ASC';
+  if (type === 'top_products') {
+    currentSort = 'year';
+    currentOrder = 'DESC';
+  } else {
+    currentSort = type === 'customer' ? 'client' : (type === 'region' ? 'region' : 'employee');
+    currentOrder = 'ASC';
+  }
   loadReport();
 }
 
 function toggleSort(col) {
+  if (currentType === 'top_products') return;
   if (currentSort === col) {
     currentOrder = currentOrder === 'ASC' ? 'DESC' : 'ASC';
   } else {
@@ -103,8 +112,13 @@ function toggleSort(col) {
 function resetFilters() {
   document.getElementById('from').value = '';
   document.getElementById('to').value = '';
-  currentSort = 'month';
-  currentOrder = 'DESC';
+  if (currentType === 'top_products') {
+    currentSort = 'year';
+    currentOrder = 'DESC';
+  } else {
+    currentSort = 'month';
+    currentOrder = 'DESC';
+  }
   loadReport();
 }
 
@@ -119,6 +133,7 @@ async function loadReport() {
   document.getElementById('btn-customer').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'customer' ? activeBtn : inactiveBtn}`;
   document.getElementById('btn-region').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'region' ? activeBtn : inactiveBtn}`;
   document.getElementById('btn-employee').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'employee' ? activeBtn : inactiveBtn}`;
+  document.getElementById('btn-top_products').className = `px-6 py-2 text-sm font-bold rounded-lg transition-all ${type === 'top_products' ? activeBtn : inactiveBtn}`;
 
   const head = document.getElementById('report-head');
   const body = document.getElementById('report-body');
@@ -129,52 +144,69 @@ async function loadReport() {
   loader.classList.remove('hidden');
   noData.classList.add('hidden');
 
-  let firstColLabel = 'Customer / Company';
-  let firstColKey = 'client';
-  if (type === 'region') { firstColLabel = 'Region Name'; firstColKey = 'region'; }
-  if (type === 'employee') { firstColLabel = 'Employee Name'; firstColKey = 'employee'; }
-
-  const sortIcon = (col) => {
-    const isActive = currentSort === col;
-    const isAsc = currentOrder === 'ASC';
-    
-    return `
-      <div class="flex flex-col ml-1.5 opacity-${isActive ? '100' : '20'} group-hover:opacity-100 transition-opacity">
-        <svg class="w-2 h-2 ${isActive && isAsc ? 'text-[#00e599]' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
-        <svg class="w-2 h-2 ${isActive && !isAsc ? 'text-[#00e599]' : 'text-gray-400'} -mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg>
-      </div>
+  if (type === 'top_products') {
+    head.innerHTML = `
+      <tr>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Region</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Year</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Rank</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Product Name</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Quantity</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Revenue</th>
+      </tr>
     `;
-  };
+  } else {
+    let firstColLabel = 'Customer / Company';
+    let firstColKey = 'client';
+    if (type === 'region') { firstColLabel = 'Region Name'; firstColKey = 'region'; }
+    if (type === 'employee') { firstColLabel = 'Employee Name'; firstColKey = 'employee'; }
 
-  head.innerHTML = `
-    <tr>
-      <th class="px-8 py-5">
-        <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          ${firstColLabel} ${sortIcon(firstColKey)}
-        </button>
-      </th>
-      <th class="px-8 py-5">
-        <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Accounting Month ${sortIcon('month')}
-        </button>
-      </th>
-      <th class="px-8 py-5 text-right">
-        <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Orders ${sortIcon('order_count')}
-        </button>
-      </th>
-      <th class="px-8 py-5 text-right">
-        <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
-          Revenue ${sortIcon('total_sum')}
-        </button>
-      </th>
-    </tr>
-  `;
+    const sortIcon = (col) => {
+      const isActive = currentSort === col;
+      const isAsc = currentOrder === 'ASC';
+      
+      return `
+        <div class="flex flex-col ml-1.5 opacity-${isActive ? '100' : '20'} group-hover:opacity-100 transition-opacity">
+          <svg class="w-2 h-2 ${isActive && isAsc ? 'text-[#00e599]' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
+          <svg class="w-2 h-2 ${isActive && !isAsc ? 'text-[#00e599]' : 'text-gray-400'} -mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20l8-8H4z"/></svg>
+        </div>
+      `;
+    };
+
+    head.innerHTML = `
+      <tr>
+        <th class="px-8 py-5">
+          <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+            ${firstColLabel} ${sortIcon(firstColKey)}
+          </button>
+        </th>
+        <th class="px-8 py-5">
+          <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+            Accounting Month ${sortIcon('month')}
+          </button>
+        </th>
+        <th class="px-8 py-5 text-right">
+          <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+            Orders ${sortIcon('order_count')}
+          </button>
+        </th>
+        <th class="px-8 py-5 text-right">
+          <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+            Revenue ${sortIcon('total_sum')}
+          </button>
+        </th>
+      </tr>
+    `;
+  }
 
   try {
     let url = `${window.API_BASE}/api/reports/sales?by=${type}&sort=${currentSort}&order=${currentOrder}`;
-    if (from) url += `&from=${from}`;
-    if (to) url += `&to=${to}`;
+    if (type === 'top_products') {
+      url = `${window.API_BASE}/api/reports/top-products`;
+    }
+    
+    if (from) url += (url.includes('?') ? '&' : '?') + `from=${from}`;
+    if (to) url += (url.includes('?') ? '&' : '?') + `to=${to}`;
 
     const res = await fetch(url);
     const data = await res.json();
@@ -189,16 +221,27 @@ async function loadReport() {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-white/[0.03] transition-colors';
       
-      let firstCol = row.client;
-      if (type === 'region') firstCol = row.region;
-      if (type === 'employee') firstCol = row.employee;
-      
-      tr.innerHTML = `
-        <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
-        <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${row.month}</td>
-        <td class="px-8 py-5 text-right text-gray-300 font-medium">${parseInt(row.order_count).toLocaleString()}</td>
-        <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-      `;
+      if (type === 'top_products') {
+        tr.innerHTML = `
+          <td class="px-8 py-5 text-white font-bold">${row.region}</td>
+          <td class="px-8 py-5 text-gray-400 font-mono text-xs">${row.year}</td>
+          <td class="px-8 py-5 text-center"><span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${row.rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">${row.rank}</span></td>
+          <td class="px-8 py-5 text-gray-300 font-medium">${row.productname}</td>
+          <td class="px-8 py-5 text-right text-gray-300">${parseInt(row.total_quantity).toLocaleString()}</td>
+          <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        `;
+      } else {
+        let firstCol = row.client;
+        if (type === 'region') firstCol = row.region;
+        if (type === 'employee') firstCol = row.employee;
+        
+        tr.innerHTML = `
+          <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
+          <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${row.month}</td>
+          <td class="px-8 py-5 text-right text-gray-300 font-medium">${parseInt(row.order_count).toLocaleString()}</td>
+          <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        `;
+      }
       body.appendChild(tr);
     });
   } catch (e) {
@@ -207,7 +250,6 @@ async function loadReport() {
   }
 }
 
-// Initial load
 loadReport();
 </script>
 </body>

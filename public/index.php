@@ -249,6 +249,66 @@ function handle_bonus_report(): void
     }
 }
 
+function handle_top_products_report(): void
+{
+    try {
+        $db = get_db();
+        $startDate = $_GET['from'] ?? null;
+        $endDate = $_GET['to'] ?? null;
+        
+        $where = [];
+        $params = [];
+
+        if ($startDate) {
+            $where[] = "o.orderdate >= :start";
+            $params['start'] = $startDate;
+        }
+        if ($endDate) {
+            $where[] = "o.orderdate <= :end";
+            $params['end'] = $endDate;
+        }
+
+        $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+        $sql = "
+            WITH product_sales AS (
+                SELECT
+                    COALESCE(c.region, 'Unknown') AS region,
+                    CAST(EXTRACT(YEAR FROM o.orderdate) AS INTEGER) AS year,
+                    p.productname,
+                    SUM(od.quantity) AS total_quantity,
+                    ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_amount
+                FROM orders o
+                JOIN customers c ON o.customerid = c.customerid
+                JOIN order_details od ON o.orderid = od.orderid
+                JOIN products p ON od.productid = p.productid
+                $whereSql
+                GROUP BY region, year, p.productname
+            ),
+            ranked_products AS (
+                SELECT
+                    region,
+                    year,
+                    productname,
+                    total_quantity,
+                    total_amount,
+                    ROW_NUMBER() OVER(PARTITION BY region, year ORDER BY total_quantity DESC) as rank
+                FROM product_sales
+            )
+            SELECT * FROM ranked_products 
+            WHERE rank <= 5
+            ORDER BY year DESC, region ASC, rank ASC
+        ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+        json_response(['rows' => $rows]);
+    } catch (Throwable $e) {
+        json_response(['error' => $e->getMessage()], 500);
+    }
+}
+
 // ── POST /api/insert/:table ───────────────────────────────────────────────────
 
 function handle_insert(string $table): void
