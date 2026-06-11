@@ -147,12 +147,10 @@ async function loadReport() {
   if (type === 'top_products') {
     head.innerHTML = `
       <tr>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Region</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Year</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Region</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Year</th>
         <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Rank</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Product Name</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Quantity</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Revenue</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Product Name</th>
       </tr>
     `;
   } else {
@@ -230,8 +228,6 @@ async function loadReport() {
           <td class="px-8 py-5 text-gray-400 font-mono text-xs">${row.year}</td>
           <td class="px-8 py-5 text-center"><span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${row.rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">${row.rank}</span></td>
           <td class="px-8 py-5 text-gray-300 font-medium">${row.productname}</td>
-          <td class="px-8 py-5 text-right text-gray-300">${parseInt(row.total_quantity).toLocaleString()}</td>
-          <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
         `;
       } else {
         let firstCol = row.client;
