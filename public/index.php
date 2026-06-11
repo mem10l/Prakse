@@ -237,7 +237,7 @@ function handle_bonus_report(): void
             JOIN order_details od ON o.orderid = od.orderid
             CROSS JOIN latest_order lo
             WHERE o.orderdate >= date_trunc('quarter', lo.max_date) - INTERVAL '2 years'
-            GROUP BY employee, year, quarter
+            GROUP BY 1, 2, 3
             ORDER BY year DESC, quarter DESC, employee ASC
         ";
 
@@ -285,6 +285,7 @@ function handle_top_products_report(): void
                 $whereSql
                 GROUP BY 1, 2, 3
             ),
+
             ranked_products AS (
                 SELECT
                     region,
