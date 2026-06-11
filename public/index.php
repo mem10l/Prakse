@@ -49,6 +49,8 @@ if ($path === '/') {
     json_response(['status' => 'ok']);
 } elseif ($path === '/api/reports/sales') {
     handle_sales_report();
+} elseif ($path === '/api/reports/top-products') {
+    handle_top_products_report();
 } elseif ($path === '/api/reports/bonuses') {
     handle_bonus_report();
 } elseif (strpos($path, '/api/insert/') === 0) {
