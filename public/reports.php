@@ -15,6 +15,7 @@
 
 <?php require __DIR__ . '/layout_nav.php'; ?>
 
+<main class="max-w-7xl mx-auto px-6 py-12">
   <div class="mb-10">
     <h2 class="text-4xl font-extrabold text-white tracking-tight">Analytics</h2>
     <p class="text-gray-500 mt-2 text-lg">Detailed business performance metrics</p>
@@ -60,10 +61,10 @@
     <div class="overflow-x-auto">
       <table class="w-full text-sm text-left">
         <thead id="report-head" class="bg-white/5 border-b border-white/5 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
-          <!-- Will be populated dynamically -->
+          <!-- Populated dynamically -->
         </thead>
         <tbody id="report-body" class="divide-y divide-white/[0.02]">
-          <!-- Will be populated dynamically -->
+          <!-- Populated dynamically -->
         </tbody>
       </table>
     </div>
@@ -77,9 +78,7 @@
       <p class="text-sm">Adjust your filters to see more results.</p>
     </div>
   </div>
-
-  </main>
-</div>
+</main>
 
 <script>
 let currentType = 'customer';
@@ -147,16 +146,13 @@ async function loadReport() {
   if (type === 'top_products') {
     head.innerHTML = `
       <tr>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Region</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Year</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Rank</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-left">Product Name</th>
+        <th class="px-8 py-5 text-left">Region</th>
+        <th class="px-8 py-5 text-left">Year</th>
+        <th class="px-8 py-5 text-center">Rank</th>
+        <th class="px-8 py-5 text-left">Product Name</th>
       </tr>
     `;
   } else {
-
-
-
     let firstColLabel = 'Customer / Company';
     let firstColKey = 'client';
     if (type === 'region') { firstColLabel = 'Region Name'; firstColKey = 'region'; }
@@ -165,7 +161,6 @@ async function loadReport() {
     const sortIcon = (col) => {
       const isActive = currentSort === col;
       const isAsc = currentOrder === 'ASC';
-      
       return `
         <div class="flex flex-col ml-1.5 opacity-${isActive ? '100' : '20'} group-hover:opacity-100 transition-opacity">
           <svg class="w-2 h-2 ${isActive && isAsc ? 'text-[#00e599]' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>
@@ -177,22 +172,22 @@ async function loadReport() {
     head.innerHTML = `
       <tr>
         <th class="px-8 py-5">
-          <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase">
             ${firstColLabel} ${sortIcon(firstColKey)}
           </button>
         </th>
         <th class="px-8 py-5">
-          <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase">
             Accounting Month ${sortIcon('month')}
           </button>
         </th>
         <th class="px-8 py-5 text-right">
-          <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase">
             Orders ${sortIcon('order_count')}
           </button>
         </th>
         <th class="px-8 py-5 text-right">
-          <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+          <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase">
             Revenue ${sortIcon('total_sum')}
           </button>
         </th>
@@ -223,17 +218,20 @@ async function loadReport() {
       tr.className = 'hover:bg-white/[0.03] transition-colors';
       
       if (type === 'top_products') {
+        // Fallback for product name key just in case
+        const productName = row.productname || row.ProductName || 'Unknown';
         tr.innerHTML = `
           <td class="px-8 py-5 text-white font-bold">${row.region}</td>
           <td class="px-8 py-5 text-gray-400 font-mono text-xs">${row.year}</td>
-          <td class="px-8 py-5 text-center"><span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${row.rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">${row.rank}</span></td>
-          <td class="px-8 py-5 text-gray-300 font-medium">${row.productname}</td>
+          <td class="px-8 py-5 text-center">
+            <span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${row.rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">
+              ${row.rank}
+            </span>
+          </td>
+          <td class="px-8 py-5 text-gray-300 font-medium">${productName}</td>
         `;
       } else {
-        let firstCol = row.client;
-        if (type === 'region') firstCol = row.region;
-        if (type === 'employee') firstCol = row.employee;
-        
+        const firstCol = row.client || row.region || row.employee || 'Unknown';
         tr.innerHTML = `
           <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
           <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${row.month}</td>
@@ -249,6 +247,7 @@ async function loadReport() {
   }
 }
 
+// Initial load
 loadReport();
 </script>
 </body>
