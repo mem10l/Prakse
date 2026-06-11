@@ -158,6 +158,7 @@ async function loadReport() {
   } else {
 
 
+
     let firstColLabel = 'Customer / Company';
     let firstColKey = 'client';
     if (type === 'region') { firstColLabel = 'Region Name'; firstColKey = 'region'; }

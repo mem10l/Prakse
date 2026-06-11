@@ -256,7 +256,7 @@ function handle_top_products_report(): void
         $startDate = $_GET['from'] ?? null;
         $endDate = $_GET['to'] ?? null;
         
-        $where = [];
+        $where = ["o.orderdate IS NOT NULL"];
         $params = [];
 
         if ($startDate) {
@@ -268,24 +268,23 @@ function handle_top_products_report(): void
             $params['end'] = $endDate;
         }
 
-        $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+        $whereSql = "WHERE " . implode(" AND ", $where);
 
         $sql = "
             WITH product_sales AS (
                 SELECT
-                    COALESCE(NULLIF(c.region, ''), 'Unknown') AS region,
+                    COALESCE(NULLIF(o.shipregion, ''), NULLIF(c.region, ''), o.shipcountry, 'Unknown') AS region,
                     CAST(EXTRACT(YEAR FROM o.orderdate) AS INTEGER) AS year,
                     p.productname,
                     SUM(od.quantity) AS total_quantity,
-                    ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_amount
+                    ROUND(CAST(SUM(od.unitprice * od.quantity * (1 - od.discount)) AS NUMERIC), 2) AS total_amount
                 FROM orders o
-                JOIN customers c ON o.customerid = c.customerid
+                LEFT JOIN customers c ON o.customerid = c.customerid
                 JOIN order_details od ON o.orderid = od.orderid
                 JOIN products p ON od.productid = p.productid
                 $whereSql
                 GROUP BY 1, 2, 3
             ),
-
             ranked_products AS (
                 SELECT
                     region,
