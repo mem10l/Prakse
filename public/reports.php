@@ -209,8 +209,15 @@ async function loadReport() {
     const data = await res.json();
     loader.classList.add('hidden');
 
+    if (data.error) {
+      noData.classList.remove('hidden');
+      noData.querySelector('p.text-sm').textContent = 'Error: ' + data.error;
+      return;
+    }
+
     if (!data.rows || data.rows.length === 0) {
       noData.classList.remove('hidden');
+      noData.querySelector('p.text-sm').textContent = 'Adjust your filters to see more results.';
       return;
     }
 
@@ -222,9 +229,9 @@ async function loadReport() {
         const region = getVal(row, 'region') || 'Unknown';
         const year = getVal(row, 'year') || 'N/A';
         const rank = getVal(row, 'rank') || '-';
-        const productName = getVal(row, 'productname', 'ProductName') || 'Unknown Product';
-        const quantity = getVal(row, 'total_quantity', 'total_quantity') || 0;
-        const revenue = getVal(row, 'total_amount', 'total_amount') || 0;
+        const productName = getVal(row, 'productname', 'ProductName', 'product_name') || 'Unknown Product';
+        const quantity = getVal(row, 'total_quantity', 'quantity') || 0;
+        const revenue = getVal(row, 'total_amount', 'amount', 'total_sum') || 0;
 
         tr.innerHTML = `
           <td class="px-8 py-5 text-white font-bold truncate">${region}</td>

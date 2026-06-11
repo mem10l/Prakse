@@ -285,7 +285,7 @@ function handle_top_products_report(): void
                 JOIN order_details od ON o.orderid = od.orderid
                 JOIN products p ON od.productid = p.productid
                 $whereSql
-                GROUP BY 1, 2, 3
+                GROUP BY region, year, p.productname
             ),
             ranked_products AS (
                 SELECT
