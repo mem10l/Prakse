@@ -273,7 +273,7 @@ function handle_top_products_report(): void
         $sql = "
             WITH product_sales AS (
                 SELECT
-                    COALESCE(c.region, 'Unknown') AS region,
+                    COALESCE(NULLIF(c.region, ''), 'Unknown') AS region,
                     CAST(EXTRACT(YEAR FROM o.orderdate) AS INTEGER) AS year,
                     p.productname,
                     SUM(od.quantity) AS total_quantity,
@@ -283,7 +283,7 @@ function handle_top_products_report(): void
                 JOIN order_details od ON o.orderid = od.orderid
                 JOIN products p ON od.productid = p.productid
                 $whereSql
-                GROUP BY region, year, p.productname
+                GROUP BY 1, 2, 3
             ),
             ranked_products AS (
                 SELECT
