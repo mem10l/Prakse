@@ -9,6 +9,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
     .neon-card { background: rgba(26, 26, 26, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    th { height: 64px; } /* Fixed header height to prevent shifts */
   </style>
 </head>
 <body class="bg-[#0a0a0a]">
@@ -26,18 +27,10 @@
       <div>
         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">Group By</label>
         <div class="inline-flex p-1 bg-black/40 rounded-xl border border-white/5">
-          <button onclick="updateReportType('customer')" id="btn-customer" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
-            Customer
-          </button>
-          <button onclick="updateReportType('region')" id="btn-region" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
-            Region
-          </button>
-          <button onclick="updateReportType('employee')" id="btn-employee" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
-            Employee
-          </button>
-          <button onclick="updateReportType('top_products')" id="btn-top_products" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">
-            Top Products
-          </button>
+          <button onclick="updateReportType('customer')" id="btn-customer" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">Customer</button>
+          <button onclick="updateReportType('region')" id="btn-region" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">Region</button>
+          <button onclick="updateReportType('employee')" id="btn-employee" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">Employee</button>
+          <button onclick="updateReportType('top_products')" id="btn-top_products" class="px-6 py-2 text-sm font-bold rounded-lg transition-all">Top Products</button>
         </div>
       </div>
       
@@ -51,15 +44,13 @@
         <input type="date" id="to" onchange="loadReport()" class="px-4 py-2 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#00e599] outline-none text-sm text-white">
       </div>
 
-      <button onclick="resetFilters()" class="px-4 py-2 text-sm font-bold text-[#00e599] hover:text-white transition-colors">
-        Reset filters
-      </button>
+      <button onclick="resetFilters()" class="px-4 py-2 text-sm font-bold text-[#00e599] hover:text-white transition-colors">Reset filters</button>
     </div>
   </div>
 
   <div class="neon-card rounded-2xl overflow-hidden border border-white/5">
     <div class="overflow-x-auto">
-      <table class="w-full text-sm text-left">
+      <table class="w-full text-sm text-left table-fixed"> <!-- Using table-fixed for perfect alignment -->
         <thead id="report-head" class="bg-white/5 border-b border-white/5 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
           <!-- Populated dynamically -->
         </thead>
@@ -121,6 +112,17 @@ function resetFilters() {
   loadReport();
 }
 
+// Robust data access helper to handle any casing from DB
+function getVal(obj, ...keys) {
+  for (const k of keys) {
+    const lowKey = k.toLowerCase();
+    for (const actualKey in obj) {
+      if (actualKey.toLowerCase() === lowKey) return obj[actualKey];
+    }
+  }
+  return null;
+}
+
 async function loadReport() {
   const type = currentType;
   const from = document.getElementById('from').value;
@@ -146,10 +148,12 @@ async function loadReport() {
   if (type === 'top_products') {
     head.innerHTML = `
       <tr>
-        <th class="px-8 py-5 text-left">Region</th>
-        <th class="px-8 py-5 text-left">Year</th>
-        <th class="px-8 py-5 text-center">Rank</th>
-        <th class="px-8 py-5 text-left">Product Name</th>
+        <th class="px-8 py-5 text-left w-[15%]">Region</th>
+        <th class="px-8 py-5 text-left w-[10%]">Year</th>
+        <th class="px-8 py-5 text-center w-[10%]">Rank</th>
+        <th class="px-8 py-5 text-left w-[35%]">Product Name</th>
+        <th class="px-8 py-5 text-right w-[15%]">Quantity</th>
+        <th class="px-8 py-5 text-right w-[15%]">Revenue</th>
       </tr>
     `;
   } else {
@@ -171,22 +175,22 @@ async function loadReport() {
 
     head.innerHTML = `
       <tr>
-        <th class="px-8 py-5">
+        <th class="px-8 py-5 w-[40%]">
           <button onclick="toggleSort('${firstColKey}')" class="group flex items-center hover:text-white transition-colors uppercase">
             ${firstColLabel} ${sortIcon(firstColKey)}
           </button>
         </th>
-        <th class="px-8 py-5">
+        <th class="px-8 py-5 w-[20%]">
           <button onclick="toggleSort('month')" class="group flex items-center hover:text-white transition-colors uppercase">
-            Accounting Month ${sortIcon('month')}
+            Month ${sortIcon('month')}
           </button>
         </th>
-        <th class="px-8 py-5 text-right">
+        <th class="px-8 py-5 text-right w-[20%]">
           <button onclick="toggleSort('order_count')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase">
             Orders ${sortIcon('order_count')}
           </button>
         </th>
-        <th class="px-8 py-5 text-right">
+        <th class="px-8 py-5 text-right w-[20%]">
           <button onclick="toggleSort('total_sum')" class="group flex items-center justify-end ml-auto hover:text-white transition-colors uppercase">
             Revenue ${sortIcon('total_sum')}
           </button>
@@ -196,10 +200,7 @@ async function loadReport() {
   }
 
   try {
-    let url = `${window.API_BASE}/api/reports/sales?by=${type}&sort=${currentSort}&order=${currentOrder}`;
-    if (type === 'top_products') {
-      url = `${window.API_BASE}/api/reports/top-products`;
-    }
+    let url = type === 'top_products' ? `${window.API_BASE}/api/reports/top-products` : `${window.API_BASE}/api/reports/sales?by=${type}&sort=${currentSort}&order=${currentOrder}`;
     
     if (from) url += (url.includes('?') ? '&' : '?') + `from=${from}`;
     if (to) url += (url.includes('?') ? '&' : '?') + `to=${to}`;
@@ -218,25 +219,36 @@ async function loadReport() {
       tr.className = 'hover:bg-white/[0.03] transition-colors';
       
       if (type === 'top_products') {
-        // Fallback for product name key just in case
-        const productName = row.productname || row.ProductName || 'Unknown';
+        const region = getVal(row, 'region') || 'Unknown';
+        const year = getVal(row, 'year') || 'N/A';
+        const rank = getVal(row, 'rank') || '-';
+        const productName = getVal(row, 'productname', 'ProductName') || 'Unknown Product';
+        const quantity = getVal(row, 'total_quantity', 'total_quantity') || 0;
+        const revenue = getVal(row, 'total_amount', 'total_amount') || 0;
+
         tr.innerHTML = `
-          <td class="px-8 py-5 text-white font-bold">${row.region}</td>
-          <td class="px-8 py-5 text-gray-400 font-mono text-xs">${row.year}</td>
+          <td class="px-8 py-5 text-white font-bold truncate">${region}</td>
+          <td class="px-8 py-5 text-gray-400 font-mono text-xs">${year}</td>
           <td class="px-8 py-5 text-center">
-            <span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${row.rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">
-              ${row.rank}
+            <span class="px-2 py-1 rounded bg-white/5 text-xs font-bold ${rank == 1 ? 'text-yellow-400' : 'text-gray-400'}">
+              ${rank}
             </span>
           </td>
-          <td class="px-8 py-5 text-gray-300 font-medium">${productName}</td>
+          <td class="px-8 py-5 text-gray-300 font-medium truncate">${productName}</td>
+          <td class="px-8 py-5 text-right text-gray-400 font-mono">${parseInt(quantity).toLocaleString()}</td>
+          <td class="px-8 py-5 text-right text-[#00e599] font-bold">$${parseFloat(revenue).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
         `;
       } else {
-        const firstCol = row.client || row.region || row.employee || 'Unknown';
+        const firstCol = getVal(row, 'client', 'region', 'employee') || 'Unknown';
+        const month = getVal(row, 'month') || 'N/A';
+        const orders = getVal(row, 'order_count') || 0;
+        const sum = getVal(row, 'total_sum') || 0;
+
         tr.innerHTML = `
-          <td class="px-8 py-5 text-white font-bold">${firstCol}</td>
-          <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${row.month}</td>
-          <td class="px-8 py-5 text-right text-gray-300 font-medium">${parseInt(row.order_count).toLocaleString()}</td>
-          <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(row.total_sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+          <td class="px-8 py-5 text-white font-bold truncate">${firstCol}</td>
+          <td class="px-8 py-5 text-gray-400 font-mono text-xs uppercase tracking-wider">${month}</td>
+          <td class="px-8 py-5 text-right text-gray-300 font-medium">${parseInt(orders).toLocaleString()}</td>
+          <td class="px-8 py-5 text-right text-[#00e599] font-extrabold">$${parseFloat(sum).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
         `;
       }
       body.appendChild(tr);
@@ -247,7 +259,6 @@ async function loadReport() {
   }
 }
 
-// Initial load
 loadReport();
 </script>
 </body>
