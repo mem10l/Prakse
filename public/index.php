@@ -156,7 +156,7 @@ function handle_sales_report(): void
             $allowedSorts[] = 'region';
             $sql = "
                 SELECT 
-                    COALESCE(c.region, 'Unknown') AS region,
+                    COALESCE(NULLIF(c.region, ''), 'Unknown') AS region,
                     TO_CHAR(o.orderdate, 'YYYY-MM') AS month,
                     COUNT(DISTINCT o.orderid) AS order_count,
                     ROUND(SUM(CAST(od.unitprice * od.quantity * (1 - od.discount) AS NUMERIC)), 2) AS total_sum
@@ -164,7 +164,7 @@ function handle_sales_report(): void
                 JOIN customers c ON o.customerid = c.customerid
                 JOIN order_details od ON o.orderid = od.orderid
                 $whereSql
-                GROUP BY region, month
+                GROUP BY 1, 2
             ";
         } elseif ($groupBy === 'employee') {
             $allowedSorts[] = 'employee';

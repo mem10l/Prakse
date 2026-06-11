@@ -147,12 +147,12 @@ async function loadReport() {
   if (type === 'top_products') {
     head.innerHTML = `
       <tr>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Region</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Year</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Rank</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Product Name</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Quantity</th>
-        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Revenue</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Reģions</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Gads</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-center">Top 5 vieta</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest">Preces nosaukums</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Skaits</th>
+        <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-right">Summa</th>
       </tr>
     `;
   } else {
