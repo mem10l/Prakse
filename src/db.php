@@ -52,3 +52,22 @@ function get_db(): PDO
 
     return $pdo;
 }
+
+/**
+ * Generates a unique 5-character string that doesn't exist in the customers table.
+ */
+function generate_unique_customer_id(PDO $db): string
+{
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    while (true) {
+        $id = '';
+        for ($i = 0; $i < 5; $i++) {
+            $id .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+        $stmt = $db->prepare("SELECT 1 FROM customers WHERE customerid = ?");
+        $stmt->execute([$id]);
+        if (!$stmt->fetch()) {
+            return $id;
+        }
+    }
+}

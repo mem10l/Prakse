@@ -35,7 +35,20 @@ To verify the connection and list tables without seeding:
 php test_db.php
 ```
 
-### 3. Start the server
+### 3. Customer ID Generator (Optional)
+
+The `customers` table uses a 5-character text primary key. To automatically generate unique IDs for new customers:
+
+```bash
+# Apply the database trigger
+# This is already included if you ran setup.php recently,
+# but can be applied manually to existing databases:
+# Use any SQL tool to run: scripts/customer_id_trigger.sql
+```
+
+A PHP helper `generate_unique_customer_id(PDO $db)` is also available in `src/db.php`.
+
+### 4. Start the server
 
 **PHP built-in server (quickest for local dev):**
 
@@ -58,15 +71,26 @@ Open **http://localhost:8000**
 
 ## Routes
 
-| Route                      | Description                                        |
-|----------------------------|----------------------------------------------------|
-| `GET /view`                | Virtualised table viewer                           |
-| `GET /reports`             | Monthly sales reports by customer or region       |
-| `GET /insert`              | Paste JSON or CSV to bulk-insert into any table    |
-| `POST /api/insert/:table`  | JSON API: `{ "format": "json"\|"csv", "data": "" }`|
-| `GET /api/table/:table`    | Paginated JSON rows (`?page=1&limit=100`)          |
-| `GET /api/reports/sales`   | JSON API for monthly sales data                    |
-| `GET /api/health`          | `{ "status": "ok" }`                              |
+### UI Routes
+
+| Route            | Description                                              |
+|------------------|----------------------------------------------------------|
+| `GET /view`      | Main dashboard with virtualised table explorer           |
+| `GET /table/:t`  | Dedicated view for a specific table (e.g. `/table/orders`) |
+| `GET /reports`   | Monthly sales reports (grouped by customer, region, or employee) |
+| `GET /bonuses`   | Quarterly employee bonus report (0.9% of total sales)    |
+| `GET /insert`    | Web interface for bulk-inserting JSON or CSV data        |
+
+### API Routes
+
+| Route                         | Method | Description                                           |
+|-------------------------------|--------|-------------------------------------------------------|
+| `/api/table/:table`           | GET    | Paginated table data (`?page=1&limit=100&sort=id`)    |
+| `/api/reports/sales`          | GET    | Sales stats (`?by=customer|region|employee`)         |
+| `/api/reports/top-products`   | GET    | Top 5 products by region/year                         |
+| `/api/reports/bonuses`        | GET    | Quarterly bonus data                                  |
+| `/api/insert/:table`          | POST   | Insert rows: `{ "format": "json"|"csv", "data": "" }` |
+| `/api/health`                 | GET    | System status check                                   |
 
 ## Tables
 
@@ -84,6 +108,7 @@ northwind-php/
   scripts/
     seed.sql                   CREATE TABLE statements for all 13 tables
     load-csv.php               CLI script to load CSVs into PostgreSQL
+    customer_id_trigger.sql    SQL for random Customer ID generation
   src/
     db.php                     PDO connection (singleton, reads .env)
     schema.php                 TABLES constant — columns & required fields

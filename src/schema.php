@@ -16,7 +16,7 @@ const TABLES = [
     'customers' => [
         'columns'  => ['customerid', 'companyname', 'contactname', 'contacttitle',
                        'address', 'city', 'region', 'postalcode', 'country', 'phone', 'fax'],
-        'required' => ['customerid', 'companyname'],
+        'required' => ['companyname'],
     ],
     'suppliers' => [
         'columns'  => ['supplierid', 'companyname', 'contactname', 'contacttitle',
